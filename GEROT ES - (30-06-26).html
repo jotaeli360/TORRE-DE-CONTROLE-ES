@@ -1,0 +1,2850 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torre de Controle - Logística ES</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #4ade80, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #schedules-title-container.collapsible .arrow-icon {
+            transform: rotate(180deg);
+        }
+        .flash-continuous {
+            animation: flash-animation 1s infinite;
+        }
+        @keyframes flash-animation {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <!-- Tela de Seleção de Usuário -->
+    <div id="user-selection-screen" class="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold gradient-text mb-2">Bem-vindo à Torre de Controle</h1>
+        <div class="bg-gray-800 rounded-full px-6 py-2 mb-4">
+             <p class="text-xl font-semibold gradient-text">Logística ES</p>
+        </div>
+        <h2 class="text-2xl text-gray-300 mb-10">Por favor, selecione sua escala para começar</h2>
+        <div id="user-buttons" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 w-full max-w-7xl">
+            <!-- Botões de usuário serão gerados aqui -->
+        </div>
+        <div class="mt-12 border-t border-gray-700 w-full max-w-4xl pt-8">
+            <button id="admin-login-btn" data-scale="ADMIN" class="bg-gray-800 rounded-full px-8 py-3 text-xl font-semibold gradient-text transition-transform duration-300 hover:scale-110 focus:outline-none">
+                ADMINISTRADOR
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Conteúdo Principal do App (invisível por padrão) -->
+    <div id="app" class="container mx-auto p-4 md:p-8 hidden">
+
+        <!-- Cabeçalho -->
+        <header class="flex justify-between items-start mb-8">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold gradient-text">Torre de Controle - Logística</h1>
+                <p id="current-time" class="text-lg text-gray-400 mt-2"></p>
+            </div>
+            <div class="relative">
+                <div class="flex items-center gap-4">
+                    <div id="logged-in-user-container" class="text-right">
+                        <!-- Info do usuário injetada pelo JS -->
+                    </div>
+                    <button id="sound-toggle-btn" class="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors focus:outline-none" title="Ativar/Desativar Sons">
+                        <svg id="sound-on-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                        <svg id="sound-off-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l-2-2m0 0l-2-2m2 2l-2 2m2-2l2-2" />
+                        </svg>
+                    </button>
+                    <button id="user-menu-btn" class="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors focus:outline-none">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="user-menu-dropdown" class="absolute hidden right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-20">
+                    <div class="py-2">
+                        <button id="notepad-btn" class="w-full text-left flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Bloco de Notas
+                        </button>
+                        <button id="change-password-btn" class="w-full text-left flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+                            </svg>
+                            Alterar Senha
+                        </button>
+                        <button id="reset-user-password-btn" class="hidden w-full text-left flex items-center px-4 py-2 text-yellow-400 hover:bg-gray-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
+                            </svg>
+                            Resetar Senha de Usuário
+                        </button>
+                        <div class="border-t border-gray-700 my-2"></div>
+                        <button id="export-data-btn" class="w-full text-left flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Exportar Dados
+                        </button>
+                        <button id="import-data-btn" class="w-full text-left flex items-center px-4 py-2 text-gray-300 hover:bg-gray-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Importar Dados
+                        </button>
+                        <input type="file" id="import-file-input" class="hidden" accept=".json">
+                        <div class="border-t border-gray-700 my-2"></div>
+                        <button id="logout-btn" class="w-full text-left flex items-center px-4 py-2 text-red-400 hover:bg-gray-700 transition-colors">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                            </svg>
+                            Trocar Usuário
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controles do Administrador -->
+        <section id="admin-controls" class="hidden mb-10">
+            <div class="bg-gray-800 rounded-lg shadow-xl p-6">
+                <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-3">Gestão de Atividades Padrão</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <!-- Coluna de Criação (Inputs de Texto) -->
+                    <div class="lg:col-span-3 space-y-4">
+                        <h3 class="text-lg font-medium text-gray-300">Detalhes da Atividade</h3>
+                        <input type="text" id="new-activity-title" placeholder="Nome da nova atividade" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                        <textarea id="new-activity-description" placeholder="Descrição (opcional)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" rows="3"></textarea>
+                        <textarea id="new-activity-predefined-comment" placeholder="Comentário Padrão (opcional)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" rows="2"></textarea>
+                    </div>
+                    <!-- Coluna de Configurações (Checkboxes e Opções) -->
+                    <div class="lg:col-span-2 space-y-4 p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                        <h3 class="text-lg font-medium text-gray-300">Configurações</h3>
+                        <div class="flex items-center justify-between py-2">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="new-activity-continuous" class="form-checkbox bg-gray-700 border-gray-600 text-blue-500 rounded focus:ring-blue-500">
+                                <label for="new-activity-continuous" class="text-sm text-gray-300">Atividade Contínua</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="new-activity-shortcut" class="form-checkbox bg-gray-700 border-gray-600 text-blue-500 rounded focus:ring-blue-500">
+                                <label for="new-activity-shortcut" class="text-sm text-gray-300">Atalho na tela inicial</label>
+                            </div>
+                        </div>
+
+                        <div id="alarm-related-settings" class="space-y-4 pt-4 border-t border-gray-600">
+                           <div>
+                                <label class="text-sm text-gray-300 block mb-2">Dias da Semana:</label>
+                                <div id="days-of-week-selector" class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="1" class="form-checkbox"> Seg</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="2" class="form-checkbox"> Ter</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="3" class="form-checkbox"> Qua</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="4" class="form-checkbox"> Qui</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="5" class="form-checkbox"> Sex</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="6" class="form-checkbox"> Sáb</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="0" class="form-checkbox"> Dom</label>
+                                    <button id="select-all-days-btn" class="text-xs text-blue-400 hover:underline">Todos</button>
+                                </div>
+                            </div>
+                             <div>
+                                <label class="text-sm text-gray-300 block mb-2">Turnos:</label>
+                                <div id="shifts-selector" class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="00-08" data-shift-name="T1" class="form-checkbox"> T1 (00-08)</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="08-16" data-shift-name="T2" class="form-checkbox"> T2 (08-16)</label>
+                                    <label class="flex items-center gap-2"><input type="checkbox" value="16-00" data-shift-name="T3" class="form-checkbox"> T3 (16-00)</label>
+                                </div>
+                            </div>
+                            <div id="alarm-inputs-container" class="space-y-2">
+                                <!-- Inputs de alarme serão inseridos aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-center">
+                    <button id="add-activity-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300">Adicionar Atividade</button>
+                </div>
+
+                <div class="border-t border-gray-700 mt-8 pt-6">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-300">Lista de Atividades Padrão</h3>
+                    <div id="activity-controls" class="hidden flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b border-gray-700">
+                         <div class="flex items-center gap-2">
+                             <span class="text-sm text-gray-400">Visualizar apenas:</span>
+                             <button data-view-filter="all" class="view-filter-btn text-sm font-semibold py-1 px-3 rounded-md transition-colors bg-blue-600 text-white">Todos</button>
+                             <button data-view-filter="00-08" class="view-filter-btn text-sm font-semibold py-1 px-3 rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-gray-300">T1</button>
+                             <button data-view-filter="08-16" class="view-filter-btn text-sm font-semibold py-1 px-3 rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-gray-300">T2</button>
+                             <button data-view-filter="16-00" class="view-filter-btn text-sm font-semibold py-1 px-3 rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-gray-300">T3</button>
+                         </div>
+                         <div class="flex items-center gap-4">
+                             <span class="text-sm text-gray-400">Ordenar por:</span>
+                             <button data-sort="name" class="sort-btn text-sm text-gray-300 hover:text-white transition-colors">Nome</button>
+                             <button data-sort="alarmTime" class="sort-btn text-sm text-gray-300 hover:text-white transition-colors">Horário</button>
+                             <button data-sort="shifts" class="sort-btn text-sm text-gray-300 hover:text-white transition-colors">Turno</button>
+                         </div>
+                     </div>
+                     <div id="master-activity-list" class="space-y-4">
+                        <!-- A lista de atividades padrão do admin será renderizada aqui -->
+                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Escalas -->
+        <section id="schedules" class="mb-10">
+             <div id="schedules-title-container" class="flex justify-between items-center cursor-pointer border-b-2 border-gray-700 pb-2 mb-4">
+                <h2 id="schedules-title" class="text-2xl font-semibold"></h2>
+                <svg id="schedules-arrow" class="w-6 h-6 text-gray-400 transition-transform duration-300 arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+            <div id="schedule-cards-wrapper" class="transition-all duration-500 ease-in-out overflow-hidden">
+                <div id="schedule-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    <!-- Cards de escala serão inseridos aqui pelo JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Dashboard do Turno -->
+        <section id="turn-dashboard" class="hidden mb-10">
+            <div class="bg-gray-800 rounded-lg shadow-xl p-6">
+                <h2 class="text-2xl font-semibold mb-6 text-center text-blue-400">Resumo do Turno</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Card Concluídas -->
+                    <div class="flex flex-col items-center">
+                        <div class="flex items-center gap-3 mb-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-lg font-medium text-gray-300">Concluídas</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="progress-bar-fill" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="progress-percent-text" class="text-lg font-semibold mt-2">0%</p>
+                    </div>
+                    <!-- Card Atrasadas -->
+                    <div class="flex flex-col items-center">
+                         <div class="flex items-center gap-3 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-lg font-medium text-gray-300">Atrasadas</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="progress-bar-overdue" class="bg-red-500 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="progress-overdue-text" class="text-lg font-semibold mt-2">0 de 0</p>
+                    </div>
+                    <!-- Card Tempo Dedicado -->
+                     <div class="flex flex-col items-center">
+                         <div class="flex items-center gap-3 mb-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" viewBox="0 0 20 20" fill="currentColor">
+                               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-lg font-medium text-gray-300">Tempo Dedicado</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="dedicated-time-bar" class="bg-cyan-500 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <p id="total-time-text" class="text-lg font-semibold mt-2 font-mono">00:00:00</p>
+                    </div>
+                </div>
+                <div id="continuous-timers-dashboard" class="mt-8 pt-6 border-t border-gray-700 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                    <!-- Timers específicos serão injetados aqui -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção de Acesso Rápido -->
+        <section id="shortcuts-section" class="hidden mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-400">Acesso Rápido</h2>
+            <div id="shortcuts-container" class="flex flex-wrap gap-4">
+                 <!-- Atalhos serão inseridos aqui pelo JavaScript -->
+            </div>
+        </section>
+
+        <!-- Seção de Atividades -->
+        <section id="activities">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                 <div class="flex items-center gap-2 border-b-2 border-gray-700">
+                    <button id="pending-tab" class="pb-2 px-4 text-xl font-semibold border-b-4 border-blue-500 text-white transition-colors duration-300">Atividades do Turno</button>
+                    <button id="completed-tab" class="pb-2 px-4 text-xl font-semibold border-b-4 border-transparent text-gray-400 hover:text-white transition-colors duration-300">Concluídas</button>
+                 </div>
+                 <div id="completed-controls" class="hidden flex items-center gap-4 mt-4 sm:mt-0">
+                     <select id="date-filter-select" class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                     <button id="export-pdf-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 flex items-center gap-2">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                         </svg>
+                         Exportar PDF
+                    </button>
+                 </div>
+            </div>
+            <div class="bg-gray-800 rounded-lg shadow-xl p-6">
+                <!-- Seção de atividades contínuas -->
+                <div id="continuous-activity-section" class="hidden">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                        <h3 class="text-lg font-semibold text-gray-400">Atividades Contínuas</h3>
+                        <button id="toggle-continuous-btn" title="Mostrar/Ocultar Atividades Contínuas">
+                            <svg class="w-6 h-6 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                    </div>
+                    <div id="continuous-activity-list" class="space-y-4"></div>
+                </div>
+
+                <div id="activity-separator" class="hidden border-t border-gray-700 my-6"></div>
+
+                <!-- Lista de atividades agendadas pendentes -->
+                <div id="pending-activity-list" class="space-y-4"></div>
+
+                 <!-- Lista de atividades concluídas (escondida por padrão) -->
+                <div id="completed-activity-list" class="space-y-4 hidden"></div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Modal de Senha -->
+    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" id="password-modal-content">
+            <h3 id="password-title" class="text-2xl font-bold text-white mb-4"></h3>
+            <p id="password-error" class="text-red-400 text-sm mb-4 h-5"></p>
+            <input type="password" id="password-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" placeholder="Digite a senha">
+            <div class="flex justify-center gap-4">
+                 <button id="cancel-password-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-password-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Alterar Senha -->
+    <div id="change-password-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm w-full text-center transform transition-all scale-95 opacity-0" id="change-password-modal-content">
+            <h3 class="text-2xl font-bold text-white mb-4">Alterar Senha</h3>
+            <p id="change-password-error" class="text-red-400 text-sm mb-4 h-5"></p>
+            <div class="space-y-4">
+                <input type="password" id="new-password-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" placeholder="Digite a nova senha">
+                <input type="password" id="confirm-password-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" placeholder="Confirme a nova senha">
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                 <button id="cancel-change-password-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-change-password-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Atividade em Andamento -->
+    <div id="timer-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-md w-full text-center transform transition-all scale-95 opacity-0" id="timer-modal-content">
+             <button id="close-timer-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div id="timer-activity-text"></div>
+            <p id="timer-activity-alarm" class="text-sm text-yellow-400 mb-6"></p>
+            <div id="timer-display" class="font-mono text-7xl text-cyan-400 my-8">00:00:00</div>
+            
+            <div id="timer-buttons">
+                <!-- Botões serão inseridos dinamicamente aqui -->
+            </div>
+
+            <div id="comment-section" class="hidden">
+                <!-- Conteúdo do comentário e botões de conclusão inseridos via JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Bloco de Notas -->
+    <div id="notepad-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-lg w-full transform transition-all scale-95 opacity-0" id="notepad-modal-content">
+             <button id="close-notepad-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 class="text-2xl font-bold text-white mb-4">Bloco de Notas</h3>
+            <textarea id="notepad-input" class="w-full h-64 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" placeholder="Suas anotações do turno..."></textarea>
+        </div>
+    </div>
+    
+    <!-- Modal de Ponte -->
+    <div id="ponte-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" id="ponte-modal-content">
+            <h3 class="text-2xl font-bold text-white mb-4">Criar Ponte</h3>
+            <p id="ponte-confirmation-text" class="text-gray-300 mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-ponte-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-ponte-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Importação -->
+    <div id="import-confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" id="import-confirm-modal-content">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-4">Atenção!</h3>
+            <p id="import-confirm-text" class="text-gray-300 mb-6">Importar um novo arquivo de dados substituirá **TODAS** as configurações e históricos atuais. Esta ação não pode ser desfeita. Deseja continuar?</p>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-import-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-import-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Confirmar Importação</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Reset de Senha (Admin) -->
+    <div id="reset-password-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-sm w-full text-center transform transition-all scale-95 opacity-0" id="reset-password-modal-content">
+            <h3 class="text-2xl font-bold text-white mb-4">Resetar Senha de Usuário</h3>
+            <p class="text-gray-400 mb-4 text-sm">Selecione o usuário para resetar a senha para o padrão ("admin").</p>
+            <select id="user-to-reset-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                <!-- Opções de usuário serão populadas aqui -->
+            </select>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-reset-password-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-reset-password-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Resetar Senha</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exportação com Pendências -->
+    <div id="export-confirm-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-8 max-w-md w-full text-center transform transition-all scale-95 opacity-0" id="export-confirm-modal-content">
+            <h3 class="text-2xl font-bold text-yellow-400 mb-4">Atividades Pendentes</h3>
+            <p id="export-confirm-text" class="text-gray-300 mb-6">Existem atividades pendentes neste turno. Se você continuar, elas serão finalizadas automaticamente antes da exportação. Deseja continuar?</p>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-export-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Cancelar</button>
+                <button id="submit-export-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-300">Confirmar Exportação</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.min.js"></script>
+    <script>
+        const scales = {
+            'A': { baseDate: '2025-08-30T00:00:00', name: 'Alice' },
+            'B': { baseDate: '2025-08-22T00:00:00', name: 'Wesley' },
+            'C': { baseDate: '2025-08-28T00:00:00', name: 'Werbert' },
+            'D': { baseDate: '2025-08-26T00:00:00', name: 'Braga' },
+            'E': { baseDate: '2025-08-24T00:00:00', name: 'João' },
+            'Ferista': { baseDate: 'on_vacation', name: 'Vanessa'}
+        };
+
+        const CYCLE_LENGTH_DAYS = 10;
+        const SHIFTS = {
+            '00-08': '00:00 - 08:00',
+            '08-16': '08:00 - 16:00',
+            '16-00': '16:00 - 00:00'
+        };
+        const DAY_ABBREVIATIONS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+        const initialMasterActivities = [
+            { id: 'std-1', text: 'Leitura de Teams e Emails', description: 'Abrir os aplicativos e verificar todas as informações marcadas e enviadas nos grupos e no particular, envios dos turnos anteriores e e-mails importantes.', alarmTime: '00:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-2', text: 'Leitura de Teams e Emails', description: 'Abrir os aplicativos e verificar todas as informações marcadas e enviadas nos grupos e no particular, envios dos turnos anteriores e e-mails importantes.', alarmTime: '08:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-3', text: 'Leitura de Teams e Emails', description: 'Abrir os aplicativos e verificar todas as informações marcadas e enviadas nos grupos e no particular, envios dos turnos anteriores e e-mails importantes.', alarmTime: '16:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-4', text: 'Troca de Turno (Saída)', description: 'Realizar passagem de turno para a próxima equipe.', alarmTime: '07:50', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-5', text: 'Troca de Turno (Saída)', description: 'Realizar passagem de turno para a próxima equipe.', alarmTime: '15:50', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-6', text: 'Troca de Turno (Saída)', description: 'Realizar passagem de turno para a próxima equipe.', alarmTime: '23:50', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-7', text: 'N1 - Análise de Performance Diária', description: 'Um encontro para revisar os números de ontem: Verificar as metas de árvores abertas e tempo de atuação, identificar o que impactou nossa operação e definir os próximos passos para otimizar nosso desempenho.', alarmTime: '10:28', daysOfWeek: [1,2,3,4,5], shifts: ['08-16'] },
+            { id: 'std-8', text: 'Teste de Rádio', description: 'Chamar as gruas do carregamento e realizar o check na planilha que está no SharePoint.', alarmTime: '06:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-9', text: 'Atualizar os Painéis da Torre', description: 'Manter as telas atualizadas e organizadas durante todo turno.', alarmTime: '00:07', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-10', text: 'Atualizar os Painéis da Torre', description: 'Manter as telas atualizadas e organizadas durante todo turno.', alarmTime: '08:07', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-11', text: 'Atualizar os Painéis da Torre', description: 'Manter as telas atualizadas e organizadas durante todo turno.', alarmTime: '16:07', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-12', text: 'Teste: Rádio de Emergência', description: 'Conferir se o rádio está funcionando (ligado e volume adequado). Caso seja acionado o rádio de emergência, realizar as tratativas e acionamentos. Atenção! Entre o fim do T1 e início do T2 existe o teste de rádio.', alarmTime: '00:13', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-13', text: 'Teste: Rádio de Emergência', description: 'Conferir se o rádio está funcionando (ligado e volume adequado). Caso seja acionado o rádio de emergência, realizar as tratativas e acionamentos. Atenção! Entre o fim do T1 e início do T2 existe o teste de rádio.', alarmTime: '08:13', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-14', text: 'Teste: Rádio de Emergência', description: 'Conferir se o rádio está funcionando (ligado e volume adequado). Caso seja acionado o rádio de emergência, realizar as tratativas e acionamentos. Atenção! Entre o fim do T1 e início do T2 existe o teste de rádio.', alarmTime: '16:13', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-15', text: 'HighLight Operacional ES - 10:00 (FECHAMENTO)', description: 'Envio do arquivo em PDF no grupo alta gestão: Fechamento, Colocar o dia primeiro do mês, até o dia anterior - Exemplo: Estando no dia 12/01, colocar dia 01/01 até 11/01.', alarmTime: '10:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-16', text: 'HighLight Operacional ES - 18:00', description: 'Envio do arquivo em PDF no grupo alta gestão: colocar o primeiro dia do mês até o dia atual.', alarmTime: '18:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-17', text: 'Enviar BI Ritmo (Fechamento + Insigth 00:00) + enviar BI Ritmo 02:00', description: 'Abrir o BI exportar pagina principal e PBTC, Preencher com os dados atuais o Insigth e enviar para o Grupo de Gestão.', alarmTime: '02:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-18', text: 'Enviar BI Ritmo', description: 'Abrir o BI exportar pagina principal e PBTC com os dados atuais e enviar para o Grupo de Gestão.', alarmTime: '08:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-19', text: 'Enviar BI Ritmo + Insigth 14:00', description: 'Abrir o BI exportar pagina principal e PBTC, Preencher com os dados atuais o Insigth e enviar para o Grupo de Gestão.', alarmTime: '14:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-20', text: 'Enviar BI Ritmo', description: 'Abrir o BI exportar pagina principal e PBTC com os dados atuais e enviar para o Grupo de Gestão.', alarmTime: '20:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-21', text: 'Enviar PBTC +  Análise Volume de frentes com baixa aderência', description: 'Enviar Print do PBTC de cada Frente de carregamento (incluir cabeçalho) e enviar nos respectivos grupos de Whatsapp marcando o Técnico Suzano responsável e o Encarregado de Campo presente no turno para aquela frente + Printar qual a frente está com aderência abaixo de 80% do Ritmo e enviar.', alarmTime: '02:30', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-22', text: 'Enviar PBTC +  Análise Volume de frentes com baixa aderência', description: 'Enviar Print do PBTC de cada Frente de carregamento (incluir cabeçalho) e enviar nos respectivos grupos de Whatsapp marcando o Técnico Suzano responsável e o Encarregado de Campo presente no turno para aquela frente + Printar qual a frente está com aderência abaixo de 80% do Ritmo e enviar.', alarmTime: '08:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-23', text: 'Enviar PBTC +  Análise Volume de frentes com baixa aderência', description: 'Enviar Print do PBTC de cada Frente de carregamento (incluir cabeçalho) e enviar nos respectivos grupos de Whatsapp marcando o Técnico Suzano responsável e o Encarregado de Campo presente no turno para aquela frente + Printar qual a frente está com aderência abaixo de 80% do Ritmo e enviar.', alarmTime: '14:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-24', text: 'Enviar PBTC +  Análise Volume de frentes com baixa aderência', description: 'Enviar Print do PBTC de cada Frente de carregamento (incluir cabeçalho) e enviar nos respectivos grupos de Whatsapp marcando o Técnico Suzano responsável e o Encarregado de Campo presente no turno para aquela frente + Printar qual a frente está com aderência abaixo de 80% do Ritmo e enviar.', alarmTime: '20:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-25', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '00:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-26', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '04:05', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-27', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '08:45', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-28', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '12:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-29', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '16:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-30', text: 'NOVO T2 + REPORT - STATUS DE GRUAS E BALANÇA', description: 'Identificando as frentes de carregamento, enviar juntamente com o template nos grupos operacionais', alarmTime: '20:30', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-31', text: 'Pedir Refeição', description: 'Entrar no Sistema do Sharepoint e pedir a Refeição', alarmTime: '00:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'], predefinedComment: '"https://suzano.sharepoint.com/sites/FacilitiesSuzano/aracruz/sri"' },
+            { id: 'std-32', text: 'Pedir Refeição', description: 'Entrar no Sistema do Sharepoint e pedir a Refeição', alarmTime: '16:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'], predefinedComment: '"https://suzano.sharepoint.com/sites/FacilitiesSuzano/aracruz/sri"' },
+            { id: 'std-33', text: 'Abertura e fechamento de Árvore de Decisão | Escalation', description: 'Registrar os desvios observados na ferramenta. Atenção à padronização de envio! Cada escalonamento de Escalation List, deve ser atualizado na árvore, dando visibilidade de quais níveis foi realizado o acionamento.', isContinuous: true, isShortcut: true, daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08', '08-16', '16-00'] },
+            { id: 'std-34', text: 'Horário de Refeição', description: 'Ao pausarem para o almoço, não esqueçam de manter o rádio com o volume adequado  para emergências durante o período. Equipe Suzano: Pausa de 30 min. Equipe Brevi: Pausa de 1h.', isContinuous: true, isShortcut: true, daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08', '08-16', '16-00'] },
+            { id: 'std-35', text: 'Chamada de Rádio - Apoio Automação Pátio e Preenchimento de Planilha', description: 'Gruas sem login do operador.', alarmTime: '03:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'], predefinedComment: 'Informado via Rádio' },
+            { id: 'std-36', text: 'Chamada de Rádio - Apoio Automação Pátio e Preenchimento de Planilha', description: 'Gruas sem login do operador.', alarmTime: '09:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'], predefinedComment: 'Informado via Rádio' },
+            { id: 'std-37', text: 'Chamada de Rádio - Apoio Automação Pátio e Preenchimento de Planilha', description: 'Gruas sem login do operador.', alarmTime: '18:15', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'], predefinedComment: 'Informado via Rádio' },
+            { id: 'std-38', text: 'Report SOS Carretas - 01:00', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '01:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-39', text: 'Report SOS Carretas - 04:45', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '04:45', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08'] },
+            { id: 'std-40', text: 'Report SOS Carretas - 09:20', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '09:20', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-41', text: 'Report SOS Carretas - 12:55', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '12:55', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['08-16'] },
+            { id: 'std-42', text: 'Report SOS Carretas - 17:00', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '17:00', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-43', text: 'Report SOS Carretas - 21:10', description: 'Com o objetivo de dar maior visibilidade às carretas com Socorro em Aberto Iremos enviar as informações pertinetes no Grupo de Reports Torre.', alarmTime: '21:10', daysOfWeek: [0,1,2,3,4,5,6], shifts: ['16-00'] },
+            { id: 'std-44', text: 'Apoio Operacional', description: 'Comunicação ativa e clara por rádio e telefone celular, garantindo que todas as equipes estejam alinhadas em tempo real; colete informações diretamente do campo e repasse com precisão aos setores de controle e manutenção, detalhando ocorrências, demandas e urgências; organize os dados recebidos, priorizando conforme o impacto na operação; antecipe possíveis gargalos observando padrões e atuando proativamente; e mantenha uma postura colaborativa, estratégica e ágil, sendo o elo que conecta todos os pontos da operação com segurança e eficiência. .', isContinuous: true, isShortcut: true, daysOfWeek: [0,1,2,3,4,5,6], shifts: ['00-08', '08-16', '16-00'] },
+        ];
+        let masterActivities = [];
+        let sessionActivities = []; // Instância de atividades para a sessão do usuário atual
+        let synth; // Para o som do alarme
+        let activeUser = null;
+        let userSelectionInterval = null, mainAppClockInterval = null, mainAppSchedulesInterval = null;
+        let userPasswords = {};
+        let scaleToLogin = null;
+        let ponteData = {};
+        let targetPonteScale = null;
+        let activeTimerModalInterval = null;
+        let activityInModal = null;
+        let alarmSoundInterval = null;
+        let editingActivityId = null;
+        let currentSort = { key: 'alarmTime', direction: 'asc' };
+        let currentViewFilter = 'all';
+        let isSoundEnabled = false;
+
+
+        // Elementos da DOM
+        const userSelectionScreen = document.getElementById('user-selection-screen');
+        const userButtonsContainer = document.getElementById('user-buttons');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const appContainer = document.getElementById('app');
+        const logoutBtn = document.getElementById('logout-btn');
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        const notepadBtn = document.getElementById('notepad-btn');
+        const currentTimeEl = document.getElementById('current-time');
+        const loggedInUserContainer = document.getElementById('logged-in-user-container');
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userMenuDropdown = document.getElementById('user-menu-dropdown');
+        const soundToggleBtn = document.getElementById('sound-toggle-btn');
+        const soundOnIcon = document.getElementById('sound-on-icon');
+        const soundOffIcon = document.getElementById('sound-off-icon');
+        const adminControlsSection = document.getElementById('admin-controls');
+        const schedulesTitleContainer = document.getElementById('schedules-title-container');
+        const schedulesTitle = document.getElementById('schedules-title');
+        const scheduleCardsWrapper = document.getElementById('schedule-cards-wrapper');
+        const scheduleCardsContainer = document.getElementById('schedule-cards');
+        const activityControls = document.getElementById('activity-controls');
+        const shortcutsSection = document.getElementById('shortcuts-section');
+        const shortcutsContainer = document.getElementById('shortcuts-container');
+        const pendingActivityListEl = document.getElementById('pending-activity-list');
+        const continuousActivitySection = document.getElementById('continuous-activity-section');
+        const continuousActivityListEl = document.getElementById('continuous-activity-list');
+        const activitySeparator = document.getElementById('activity-separator');
+        const completedActivityListEl = document.getElementById('completed-activity-list');
+        const pendingTab = document.getElementById('pending-tab');
+        const completedTab = document.getElementById('completed-tab');
+        const completedControls = document.getElementById('completed-controls');
+        const dateFilterSelect = document.getElementById('date-filter-select');
+        const exportDataBtn = document.getElementById('export-data-btn');
+        const importDataBtn = document.getElementById('import-data-btn');
+        const importFileInput = document.getElementById('import-file-input');
+        const resetUserPasswordBtn = document.getElementById('reset-user-password-btn');
+
+        let exportPdfBtn;
+        let newActivityTitleEl, newActivityDescriptionEl, newActivityPredefinedCommentEl, newActivityContinuousEl, newActivityShortcutEl, shiftsSelector, alarmInputsContainer, addActivityBtn, selectAllDaysBtn;
+        let fileToImportContent = null;
+        
+        // Modais
+        const passwordModal = document.getElementById('password-modal');
+        const passwordModalContent = document.getElementById('password-modal-content');
+        const passwordTitle = document.getElementById('password-title');
+        const passwordInput = document.getElementById('password-input');
+        const passwordError = document.getElementById('password-error');
+        const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+        const submitPasswordBtn = document.getElementById('submit-password-btn');
+
+        const changePasswordModal = document.getElementById('change-password-modal');
+        const changePasswordModalContent = document.getElementById('change-password-modal-content');
+        const changePasswordError = document.getElementById('change-password-error');
+        const newPasswordInput = document.getElementById('new-password-input');
+        const confirmPasswordInput = document.getElementById('confirm-password-input');
+        const cancelChangePasswordBtn = document.getElementById('cancel-change-password-btn');
+        const submitChangePasswordBtn = document.getElementById('submit-change-password-btn');
+
+        const timerModal = document.getElementById('timer-modal');
+        const timerModalContent = document.getElementById('timer-modal-content');
+        const timerActivityText = document.getElementById('timer-activity-text');
+        const timerActivityAlarm = document.getElementById('timer-activity-alarm');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerButtons = document.getElementById('timer-buttons');
+        const commentSection = document.getElementById('comment-section');
+        const closeTimerModalBtn = document.getElementById('close-timer-modal-btn');
+        
+        const notepadModal = document.getElementById('notepad-modal');
+        const notepadModalContent = document.getElementById('notepad-modal-content');
+        const notepadInput = document.getElementById('notepad-input');
+        const closeNotepadBtn = document.getElementById('close-notepad-btn');
+        
+        const ponteModal = document.getElementById('ponte-modal');
+        const ponteModalContent = document.getElementById('ponte-modal-content');
+        const ponteConfirmationText = document.getElementById('ponte-confirmation-text');
+        const cancelPonteBtn = document.getElementById('cancel-ponte-btn');
+        const submitPonteBtn = document.getElementById('submit-ponte-btn');
+        
+        const importConfirmModal = document.getElementById('import-confirm-modal');
+        const importConfirmModalContent = document.getElementById('import-confirm-modal-content');
+        const cancelImportBtn = document.getElementById('cancel-import-btn');
+        const submitImportBtn = document.getElementById('submit-import-btn');
+
+        const resetPasswordModal = document.getElementById('reset-password-modal');
+        const resetPasswordModalContent = document.getElementById('reset-password-modal-content');
+        const userToResetSelect = document.getElementById('user-to-reset-select');
+        const cancelResetPasswordBtn = document.getElementById('cancel-reset-password-btn');
+        const submitResetPasswordBtn = document.getElementById('submit-reset-password-btn');
+
+        const exportConfirmModal = document.getElementById('export-confirm-modal');
+        const exportConfirmModalContent = document.getElementById('export-confirm-modal-content');
+        const exportConfirmText = document.getElementById('export-confirm-text');
+        const cancelExportBtn = document.getElementById('cancel-export-btn');
+        const submitExportBtn = document.getElementById('submit-export-btn');
+
+
+        // --- Lógica de Senhas ---
+        function openPasswordModal(scale) {
+            scaleToLogin = scale;
+            passwordError.textContent = '';
+            passwordInput.value = '';
+            passwordInput.placeholder = 'Digite a senha';
+            submitPasswordBtn.textContent = 'Entrar';
+            passwordTitle.textContent = `Acessar Escala ${scaleToLogin}`;
+            if (scaleToLogin === 'ADMIN') {
+                 passwordTitle.textContent = 'Acesso Administrador';
+            }
+            passwordModal.classList.remove('hidden');
+            setTimeout(() => passwordModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+            passwordInput.focus();
+        }
+
+        function closePasswordModal() {
+            passwordModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                passwordModal.classList.add('hidden');
+                scaleToLogin = null;
+            }, 300);
+        }
+
+        function handlePasswordSubmit() {
+            const enteredPassword = passwordInput.value;
+            if (enteredPassword === 'adminmaster') {
+                closePasswordModal();
+                login(scaleToLogin);
+                return; 
+            }
+
+            const correctPassword = userPasswords[scaleToLogin] || 'admin';
+
+            if (enteredPassword === correctPassword) {
+                closePasswordModal();
+                login(scaleToLogin);
+            } else {
+                passwordError.textContent = 'Senha incorreta. Tente novamente.';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+        
+        function openChangePasswordModal() {
+            changePasswordError.textContent = '';
+            newPasswordInput.value = '';
+            confirmPasswordInput.value = '';
+            changePasswordModal.classList.remove('hidden');
+            setTimeout(() => changePasswordModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+            newPasswordInput.focus();
+        }
+
+        function closeChangePasswordModal() {
+            changePasswordModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => changePasswordModal.classList.add('hidden'), 300);
+        }
+
+        function handleChangePasswordSubmit() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!newPassword || !confirmPassword) {
+                changePasswordError.textContent = 'Ambos os campos são obrigatórios.';
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                changePasswordError.textContent = 'As senhas não coincidem.';
+                return;
+            }
+
+            userPasswords[activeUser] = newPassword;
+            saveState();
+            alert('Senha alterada com sucesso!');
+            closeChangePasswordModal();
+        }
+
+        function openResetPasswordModal() {
+            userToResetSelect.innerHTML = '';
+            Object.keys(scales).forEach(scale => {
+                // Não adiciona o admin ou o ferista à lista de reset
+                if (scale !== 'ADMIN' && scale !== 'F') {
+                    const option = document.createElement('option');
+                    option.value = scale;
+                    option.textContent = `Escala ${scale} - ${scales[scale].name}`;
+                    userToResetSelect.appendChild(option);
+                }
+            });
+            resetPasswordModal.classList.remove('hidden');
+            setTimeout(() => resetPasswordModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+        }
+
+        function closeResetPasswordModal() {
+            resetPasswordModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => resetPasswordModal.classList.add('hidden'), 300);
+        }
+
+        function handleResetPasswordSubmit() {
+            const userToReset = userToResetSelect.value;
+            if (userToReset && userPasswords[userToReset]) {
+                delete userPasswords[userToReset];
+                saveState();
+                alert(`A senha para a Escala ${userToReset} foi resetada para "admin".`);
+            } else if (userToReset) {
+                alert(`A Escala ${userToReset} já está usando a senha padrão.`);
+            }
+            closeResetPasswordModal();
+        }
+
+        // --- Lógica de Autenticação / Seleção de Usuário ---
+        function renderUserSelection() {
+            const currentScales = getBridgedScales();
+            userButtonsContainer.innerHTML = '';
+            for (const scale in currentScales) {
+                const data = currentScales[scale];
+                const { status, shift, color, textColor } = calculateCurrentStatus(data.baseDate);
+
+                const button = document.createElement('button');
+                button.dataset.scale = scale;
+                button.className = "bg-gray-800 hover:bg-blue-600 text-white font-bold p-4 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg text-center w-full";
+                
+                const statusHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-2xl text-blue-400">Escala ${scale}</span>
+                        <div class="flex items-center gap-2 text-xs font-semibold">
+                            <span class="relative flex h-2 w-2">
+                                ${status === 'Trabalhando' ? `<span class="animate-ping absolute inline-flex h-full w-full rounded-full ${color} opacity-75"></span>` : ''}
+                                <span class="relative inline-flex rounded-full h-2 w-2 ${color}"></span>
+                            </span>
+                            <span class="${textColor}">${status}</span>
+                        </div>
+                    </div>`;
+
+                const nameHTML = `<p class="text-lg font-medium text-gray-100 mb-1">${data.name}</p>`;
+                const shiftHTML = `<p class="text-xs text-gray-400 font-normal h-4">${shift ? `Turno: ${shift}` : ''}</p>`;
+
+                button.innerHTML = statusHTML + nameHTML + shiftHTML;
+                userButtonsContainer.appendChild(button);
+            }
+        }
+        
+        userButtonsContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if(button && button.dataset.scale){
+                openPasswordModal(button.dataset.scale);
+            }
+        });
+        
+        adminLoginBtn.addEventListener('click', () => {
+            openPasswordModal('ADMIN');
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            // Primeiro, finaliza e salva todas as atividades pendentes do turno atual.
+            finalizeCurrentShiftActivitiesOnLogout();
+
+            // Depois, continua com o processo de logout normal.
+            if(mainAppClockInterval) clearInterval(mainAppClockInterval);
+            if(mainAppSchedulesInterval) clearInterval(mainAppSchedulesInterval);
+            mainAppClockInterval = null;
+            mainAppSchedulesInterval = null;
+
+            sessionActivities.forEach(act => {
+                if(act.timerInterval) clearInterval(act.timerInterval);
+            });
+            localStorage.removeItem('logisticsControlTower_activeUser');
+            activeUser = null;
+            appContainer.classList.add('hidden');
+            const turnDashboard = document.getElementById('turn-dashboard');
+            if (turnDashboard) turnDashboard.classList.add('hidden');
+            userSelectionScreen.classList.remove('hidden');
+            checkLoggedInUser();
+        });
+
+        function login(scale) {
+            if (userSelectionInterval) {
+                clearInterval(userSelectionInterval);
+                userSelectionInterval = null;
+            }
+            activeUser = scale;
+            localStorage.setItem('logisticsControlTower_activeUser', scale);
+            userSelectionScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            initializeMainApp();
+        }
+
+        function checkLoggedInUser() {
+            if (userSelectionInterval) clearInterval(userSelectionInterval);
+            const savedUser = localStorage.getItem('logisticsControlTower_activeUser');
+            if (savedUser) {
+                activeUser = savedUser;
+                userSelectionScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                initializeMainApp();
+            } else {
+                renderUserSelection();
+                userSelectionInterval = setInterval(renderUserSelection, 30000);
+            }
+        }
+
+        // --- Lógica de cálculo de escala ---
+        function calculateCurrentStatus(baseDateStr) {
+            if (baseDateStr === 'on_vacation') {
+                return {
+                    status: 'Férias',
+                    shift: null,
+                    color: 'bg-cyan-500',
+                    textColor: 'text-cyan-400'
+                };
+            }
+            const baseDate = new Date(baseDateStr);
+            const now = new Date();
+            const diffMillis = now - baseDate;
+            const diffDays = Math.floor(diffMillis / (1000 * 60 * 60 * 24));
+            const dayInCycle = diffDays % CYCLE_LENGTH_DAYS;
+            const currentHour = now.getHours();
+
+            let shiftInfo = { start: -1, end: -1, text: null };
+
+            if (dayInCycle >= 0 && dayInCycle <= 1) {
+                shiftInfo = { start: 0, end: 8, text: SHIFTS['00-08'] };
+            } else if (dayInCycle >= 2 && dayInCycle <= 3) {
+                shiftInfo = { start: 8, end: 16, text: SHIFTS['08-16'] };
+            } else if (dayInCycle >= 4 && dayInCycle <= 5) {
+                shiftInfo = { start: 16, end: 24, text: SHIFTS['16-00'] };
+            } else {
+                const folgaDay = dayInCycle - 5; // Vai de 1 a 4
+                
+                if (folgaDay === 4 && currentHour >= 16) {
+                    return {
+                        status: 'Próximo Turno',
+                        shift: SHIFTS['00-08'],
+                        color: 'bg-orange-500',
+                        textColor: 'text-orange-400'
+                    };
+                }
+
+                return { 
+                    status: `${folgaDay}° Folga`, 
+                    shift: null, 
+                    color: 'bg-gray-500', 
+                    textColor: 'text-gray-400' 
+                };
+            }
+
+            if (currentHour >= shiftInfo.start && currentHour < shiftInfo.end) {
+                return { 
+                    status: 'Trabalhando', 
+                    shift: shiftInfo.text, 
+                    color: 'bg-green-500', 
+                    textColor: 'text-green-400' 
+                };
+            } else if (currentHour < shiftInfo.start) {
+                return { 
+                    status: 'Próximo Turno', 
+                    shift: shiftInfo.text, 
+                    color: 'bg-orange-500', 
+                    textColor: 'text-orange-400' 
+                };
+            } else { // currentHour >= shiftInfo.end
+                return { 
+                    status: 'Turno Finalizado', 
+                    shift: shiftInfo.text, 
+                    color: 'bg-yellow-500', 
+                    textColor: 'text-yellow-400' 
+                };
+            }
+        }
+        
+        // --- Funções de Renderização ---
+        function renderSchedules() {
+            const currentScales = getBridgedScales();
+            scheduleCardsContainer.innerHTML = '';
+            const isAdmin = activeUser === 'ADMIN';
+            
+            if (isAdmin) {
+                schedulesTitle.textContent = 'Gerenciar Escalas da Equipe';
+                scheduleCardsWrapper.style.maxHeight = '1000px';
+                schedulesTitleContainer.classList.remove('collapsible');
+                document.getElementById('schedules-arrow').style.display = 'none';
+
+            } else {
+                schedulesTitle.textContent = 'Visualizar Escala da Equipe';
+                schedulesTitleContainer.classList.add('collapsible');
+                document.getElementById('schedules-arrow').style.display = 'block';
+            }
+            
+            for (const [scale, data] of Object.entries(currentScales)) {
+                const { status, shift, color, textColor } = calculateCurrentStatus(data.baseDate);
+                const nameInputHTML = isAdmin ?
+                    `<input type="text" value="${data.name}" data-scale="${scale}" class="w-full bg-transparent text-lg text-white mb-2 pb-1 border-b border-gray-700 focus:outline-none focus:border-blue-400" onchange="updateName(this)">` :
+                    `<p class="w-full bg-transparent text-lg text-white mb-2 pb-1">${data.name}</p>`;
+                
+                const originalData = scales[scale]; // Use original data for management
+                const isOnVacation = originalData.baseDate === 'on_vacation';
+                const dateForInputValue = (isOnVacation ? originalData.lastBaseDate : originalData.baseDate) || new Date().toISOString();
+                const baseDateForInput = new Date(dateForInputValue).toISOString().split('T')[0];
+
+                const dateInputHTML = isAdmin ? `
+                    <div class="mt-2 space-y-2">
+                        <div>
+                            <label for="date-${scale}" class="text-xs text-gray-400">Data de Início:</label>
+                            <input type="date" id="date-${scale}" value="${baseDateForInput}" data-scale="${scale}" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50" onchange="updateBaseDate(this)" ${isOnVacation ? 'disabled' : ''}>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="vacation-${scale}" data-scale="${scale}" class="form-checkbox bg-gray-600 border-gray-500 text-cyan-400 rounded focus:ring-cyan-500" onchange="toggleVacation(this)" ${isOnVacation ? 'checked' : ''}>
+                            <label for="vacation-${scale}" class="text-xs text-gray-400">Férias</label>
+                        </div>
+                    </div>` : '';
+
+                const isBridged = ponteData.bridges && ponteData.bridges[scale];
+                const bridgeIcon = isBridged ? `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cyan-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" title="Em ponte com Escala ${ponteData.bridges[scale]}">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                ` : '';
+
+                const cardClickHandler = (!isAdmin && scale !== activeUser && data.baseDate !== 'on_vacation' && !isBridged) ? `onclick="openPonteModal('${scale}')"` : '';
+                const cursorStyle = cardClickHandler ? 'cursor-pointer' : '';
+
+                scheduleCardsContainer.innerHTML += `
+                    <div class="bg-gray-800 rounded-lg shadow-xl p-5 ${isAdmin ? '' : 'transform hover:scale-105 transition-transform duration-300'} ${cursorStyle}" ${cardClickHandler}>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="flex items-center text-2xl font-bold text-blue-400">Escala ${scale} ${bridgeIcon}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="relative flex h-3 w-3">
+                                     ${status === 'Trabalhando' ? `<span class="animate-ping absolute inline-flex h-full w-full rounded-full ${color} opacity-75"></span>` : ''}
+                                    <span class="relative inline-flex rounded-full h-3 w-3 ${color}"></span>
+                                </span>
+                                <span class="font-semibold ${textColor}">${status}</span>
+                            </div>
+                        </div>
+                        ${nameInputHTML}
+                        <p class="text-gray-400 text-base">${shift ? `Turno: ${shift}` : 'Aproveite o descanso!'}</p>
+                        ${dateInputHTML}
+                    </div>`;
+            }
+        }
+
+        function sortActivities(activities) {
+            activities.sort((a, b) => {
+                let valA, valB;
+                if (currentSort.key === 'name') {
+                    valA = a.text.toLowerCase();
+                    valB = b.text.toLowerCase();
+                } else if (currentSort.key === 'alarmTime') {
+                    valA = a.alarmTime || '23:59';
+                    valB = b.alarmTime || '23:59';
+                } else if (currentSort.key === 'shifts') {
+                    valA = a.shifts[0] || '';
+                    valB = b.shifts[0] || '';
+                } else { 
+                    valA = a.alarmTime || '23:59';
+                    valB = b.alarmTime || '23:59';
+                }
+
+                if (valA < valB) return currentSort.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        function createActivityHTML(activity, sessionActivity, isAdmin) {
+            const isContinuous = activity.isContinuous;
+            const now = new Date();
+            const currentTimeStr = now.toTimeString().slice(0, 5);
+            const isOverdue = !isAdmin && !isContinuous && activity.alarmTime && currentTimeStr > activity.alarmTime && !sessionActivity.startTimeRecord && !sessionActivity.isCompleted;
+
+            let containerClass = 'bg-gray-700';
+            if (isOverdue) {
+                containerClass = 'bg-red-900/40 border border-red-600';
+            } else if (isContinuous) {
+                containerClass = 'bg-yellow-900/30 border border-yellow-700';
+            }
+            
+            const elapsedTime = sessionActivity.timerInterval ? Math.floor((Date.now() - sessionActivity.startTime) / 1000) : (sessionActivity.elapsedTime || 0);
+            const formattedTime = new Date(elapsedTime * 1000).toISOString().substr(11, 8);
+
+            const alarmSet = !isContinuous && activity.alarmTime ? `<span class="text-xs text-yellow-400">(Alarme: ${activity.alarmTime})</span>` : '';
+            let daysSet = '', shiftsSet = '';
+            if (isAdmin) {
+                if (activity.daysOfWeek && activity.daysOfWeek.length > 0) {
+                    const daysString = activity.daysOfWeek.map(dayIndex => DAY_ABBREVIATIONS[dayIndex]).join(', ');
+                    daysSet = `<span class="text-xs text-cyan-400">(Dias: ${daysString})</span>`;
+                }
+                if (!isContinuous && activity.shifts && activity.shifts.length > 0) {
+                    const shiftsString = activity.shifts.map(shiftKey => `T${Object.keys(SHIFTS).indexOf(shiftKey) + 1}`).join(', ');
+                    shiftsSet = `<span class="text-xs text-purple-400">(Turnos: ${shiftsString})</span>`;
+                }
+            }
+
+            const descriptionHTML = activity.description ? `<p class="text-sm text-gray-400">${activity.description}</p>` : '';
+            const commentHTML = sessionActivity.comment ? `<p class="text-sm text-green-400 mt-1 italic">"${sessionActivity.comment}"</p>` : '';
+            
+            let startTimeHTML = '';
+            if (sessionActivity.startTimeRecord) {
+                const startTimeString = new Date(sessionActivity.startTimeRecord).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                startTimeHTML = `<span class="font-mono text-base text-gray-400">(Início: ${startTimeString})</span>`;
+            }
+
+            const adminButtonsHTML = `
+                 <button class="text-gray-400 hover:text-white" onclick="editActivity('${activity.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                      <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <button class="text-red-400 hover:text-red-500" onclick="deleteActivity('${activity.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            `;
+            
+            const buttonIcon = sessionActivity.timerInterval ? 
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg> Parar` : 
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Iniciar`;
+            const buttonClass = sessionActivity.timerInterval ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600';
+
+            const userControlsHTML = `
+                <div class="flex flex-col items-end text-right">
+                    ${startTimeHTML}
+                    <span class="font-mono text-lg text-cyan-400">${formattedTime}</span>
+                </div>
+                <button class="flex items-center justify-center text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ${buttonClass}" onclick="toggleTimer('${activity.id}')">
+                    ${buttonIcon}
+                </button>
+                 ${sessionActivity.startTimeRecord ? `
+                 <button class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300" onclick="completeActivity('${activity.id}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Concluir
+                </button>` : ''}
+            `;
+
+             const activityControlsHTML = `
+                <div class="flex items-center gap-4">
+                     ${isAdmin ? adminButtonsHTML : userControlsHTML}
+                </div>
+            `;
+
+            return `
+                <div class="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg transition-colors duration-300 ${containerClass}">
+                    <div class="flex-grow mb-3 sm:mb-0">
+                        <p class="text-white font-semibold">${activity.text}</p>
+                        ${descriptionHTML}
+                        ${commentHTML}
+                        <div class="flex gap-x-3 mt-1">${alarmSet} ${daysSet} ${shiftsSet}</div>
+                    </div>
+                    ${activityControlsHTML}
+                </div>`;
+        }
+
+
+        // --- Lógica de Atividades ---
+        function addActivity() {
+            const title = newActivityTitleEl.value.trim();
+            const description = newActivityDescriptionEl.value.trim();
+            const predefinedComment = newActivityPredefinedCommentEl.value.trim();
+            const isContinuous = newActivityContinuousEl.checked;
+            const isShortcut = newActivityShortcutEl.checked;
+            if (!title) return;
+
+            if (isContinuous) {
+                const allDays = [0, 1, 2, 3, 4, 5, 6];
+                masterActivities.push({
+                    id: 'id-' + Date.now(),
+                    text: title,
+                    description: description,
+                    predefinedComment: predefinedComment,
+                    isContinuous: true,
+                    isShortcut: isShortcut,
+                    alarmTime: null,
+                    daysOfWeek: allDays,
+                    shifts: Object.keys(SHIFTS)
+                });
+            } else {
+                const selectedDays = Array.from(document.querySelectorAll('#days-of-week-selector input:checked')).map(cb => parseInt(cb.value, 10));
+                if (selectedDays.length === 0) {
+                    alert('Por favor, selecione ao menos um dia.');
+                    return;
+                }
+                const selectedShifts = Array.from(document.querySelectorAll('#shifts-selector input:checked')).map(cb => cb.value);
+                if (selectedShifts.length === 0) {
+                    alert('Por favor, selecione ao menos um turno para atividades agendadas.');
+                    return;
+                }
+
+                selectedShifts.forEach(shiftKey => {
+                    const alarmInput = document.getElementById(`alarm-input-${shiftKey}`);
+                    const alarmTime = alarmInput ? alarmInput.value : null;
+
+                    masterActivities.push({
+                        id: 'id-' + Date.now() + '-' + shiftKey,
+                        text: title,
+                        description: description,
+                        predefinedComment: predefinedComment,
+                        isContinuous: false,
+                        isShortcut: isShortcut,
+                        alarmTime: alarmTime,
+                        daysOfWeek: selectedDays,
+                        shifts: [shiftKey]
+                    });
+                });
+            }
+
+            newActivityTitleEl.value = '';
+            newActivityDescriptionEl.value = '';
+            newActivityPredefinedCommentEl.value = '';
+            newActivityContinuousEl.checked = false;
+            newActivityShortcutEl.checked = false;
+            document.getElementById('alarm-related-settings').classList.remove('hidden');
+            document.querySelectorAll('#days-of-week-selector input:checked, #shifts-selector input:checked').forEach(cb => cb.checked = false);
+            alarmInputsContainer.innerHTML = '';
+            
+            refreshSessionActivities();
+            renderActivities();
+            saveState();
+        }
+        
+        window.uncompleteActivity = (id, dateKey) => {
+            // Remove do histórico persistente
+            const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+            if (history[activeUser] && history[activeUser][dateKey]) {
+                history[activeUser][dateKey] = history[activeUser][dateKey].filter(a => a.id !== id);
+                if (history[activeUser][dateKey].length === 0) {
+                    delete history[activeUser][dateKey];
+                }
+            }
+            localStorage.setItem('logisticsControlTower_completedHistory', JSON.stringify(history));
+            
+            // Marca como não concluída na sessão atual
+            const activityInSession = sessionActivities.find(a => a.id === id);
+            if (activityInSession) {
+                activityInSession.isCompleted = false;
+                activityInSession.completionTimeRecord = null;
+                activityInSession.completionStatus = null;
+                saveDailyActivities();
+            }
+            
+            renderActivities();
+        };
+
+        window.editActivity = (id) => {
+            editingActivityId = id;
+            renderActivities();
+        };
+
+        window.cancelEditActivity = () => {
+            editingActivityId = null;
+            renderActivities();
+        };
+
+        window.saveGroupedActivityEdit = (idsString) => {
+            const idsToDelete = idsString.split(',');
+            const mainActivityForTitle = masterActivities.find(a => a.id === idsToDelete[0]);
+             if (!mainActivityForTitle) {
+                console.error("Atividade principal para edição não encontrada.");
+                cancelEditActivity();
+                return;
+            }
+            const oldTitle = mainActivityForTitle.text;
+
+            // 1. Get values from the form
+            const newTitle = document.getElementById('edit-group-title').value.trim();
+            if (!newTitle) {
+                alert("O nome da atividade não pode estar vazio.");
+                return;
+            }
+            const newDescription = document.getElementById('edit-group-desc').value.trim();
+            const newPredefinedComment = document.getElementById('edit-group-predefined-comment').value.trim();
+            const newIsContinuous = document.getElementById('edit-group-continuous').checked;
+            const newIsShortcut = document.getElementById('edit-group-shortcut').checked;
+            
+            // 2. Remove all activities that were part of the group (same original name)
+            masterActivities = masterActivities.filter(act => act.text !== oldTitle);
+
+            // 3. Create new activities based on the form data
+            if (newIsContinuous) {
+                masterActivities.push({
+                    id: 'id-' + Date.now(),
+                    text: newTitle,
+                    description: newDescription,
+                    predefinedComment: newPredefinedComment,
+                    isContinuous: true,
+                    isShortcut: newIsShortcut,
+                    alarmTime: null,
+                    daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+                    shifts: Object.keys(SHIFTS)
+                });
+            } else {
+                const newDaysOfWeek = Array.from(document.querySelectorAll('#edit-days-of-week-selector input:checked')).map(cb => parseInt(cb.value, 10));
+                const selectedShiftsCheckboxes = document.querySelectorAll('#edit-shifts-selector input:checked');
+
+                if (selectedShiftsCheckboxes.length === 0 && !newIsContinuous) {
+                    alert("Selecione ao menos um turno para atividades agendadas.");
+                     // Re-add the deleted activities if validation fails to prevent data loss
+                    // This is complex, for now we just alert and stop. The user will have to cancel.
+                    return; 
+                }
+
+                selectedShiftsCheckboxes.forEach(checkbox => {
+                    const shiftKey = checkbox.value;
+                    const alarmInput = document.getElementById(`edit-alarm-input-${shiftKey}`);
+                    const newAlarmTime = alarmInput ? alarmInput.value : null;
+
+                    masterActivities.push({
+                        id: 'id-' + Date.now() + '-' + shiftKey,
+                        text: newTitle,
+                        description: newDescription,
+                        predefinedComment: newPredefinedComment,
+                        isContinuous: false,
+                        isShortcut: newIsShortcut,
+                        alarmTime: newAlarmTime,
+                        daysOfWeek: newDaysOfWeek,
+                        shifts: [shiftKey]
+                    });
+                });
+            }
+
+            // 4. Reset state and re-render
+            editingActivityId = null;
+            refreshSessionActivities(); 
+            renderActivities();
+            saveState();
+        };
+
+        function refreshSessionActivities() {
+            const isAdmin = activeUser === 'ADMIN';
+
+            // Para admin, sessionActivities é apenas a lista mestre.
+            if (isAdmin) {
+                sessionActivities = [...masterActivities];
+                return;
+            }
+            
+            const currentScales = getBridgedScales();
+
+            const allSavedComments = JSON.parse(localStorage.getItem('logisticsControlTower_comments')) || {};
+            const userSavedComments = allSavedComments[activeUser] || {};
+            
+            sessionActivities.forEach(act => {
+                if (act.timerInterval) clearInterval(act.timerInterval);
+            });
+
+            const dailyActivitiesStore = JSON.parse(localStorage.getItem('logisticsControlTower_dailyActivities')) || {};
+            if (!dailyActivitiesStore[activeUser]) {
+                dailyActivitiesStore[activeUser] = {};
+            }
+            const todayKey = new Date().toISOString().split('T')[0];
+
+            // Limpa as atividades do dia se a ponte mudou
+            const ponteId = ponteData.bridges ? ponteData.bridges[activeUser] || 'none' : 'none';
+            const savedPonteId = localStorage.getItem(`logisticsControlTower_lastPonteId_${activeUser}`) || 'none';
+            if (ponteId !== savedPonteId) {
+                delete dailyActivitiesStore[activeUser][todayKey];
+                localStorage.setItem(`logisticsControlTower_lastPonteId_${activeUser}`, ponteId);
+            }
+
+            // Se já existem atividades para o dia de hoje, carrega-as.
+            if (dailyActivitiesStore[activeUser][todayKey]) {
+                sessionActivities = dailyActivitiesStore[activeUser][todayKey];
+                // Garante a compatibilidade com versões antigas, adicionando shiftDate se não existir.
+                sessionActivities.forEach(act => {
+                    if (!act.shiftDate) {
+                        act.shiftDate = todayKey;
+                    }
+                });
+            } else {
+                // Se não, instancia novas atividades a partir da lista mestre.
+                const userStatus = calculateCurrentStatus(currentScales[activeUser].baseDate);
+                sessionActivities = []; // Limpa antes de popular
+
+                if (userStatus.status === 'Trabalhando' || userStatus.status === 'Próximo Turno') {
+                    const userShiftKey = Object.keys(SHIFTS).find(key => SHIFTS[key] === userStatus.shift);
+                    const currentDay = new Date().getDay();
+
+                    const activitiesToInstantiate = masterActivities.filter(act => {
+                        const dayMatch = act.daysOfWeek && act.daysOfWeek.includes(currentDay);
+                        const shiftMatch = userShiftKey && act.shifts && act.shifts.includes(userShiftKey);
+                        return dayMatch && shiftMatch;
+                    });
+
+                    sessionActivities = activitiesToInstantiate.map(masterAct => {
+                        const instanceId = masterAct.id + '_' + todayKey + '_' + (userShiftKey || 'cont');
+                        return {
+                            ...masterAct,
+                            id: instanceId, // ID único para esta instância diária
+                            masterId: masterAct.id,
+                            shiftDate: todayKey, // Define a data do turno no momento da criação da atividade
+                            startTime: null,
+                            timerInterval: null,
+                            elapsedTime: 0,
+                            alarmTriggered: false,
+                            comment: userSavedComments[instanceId] || masterAct.predefinedComment || '',
+                            startTimeRecord: null,
+                            isCompleted: false,
+                            completionTimeRecord: null,
+                            completionStatus: null
+                        };
+                    });
+                    saveDailyActivities();
+                }
+            }
+        }
+
+        function renderDashboard() {
+            const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+            const userHistory = history[activeUser] || {};
+            const todayKey = new Date().toISOString().split('T')[0];
+            const completedToday = userHistory[todayKey] || [];
+
+            const totalActivitiesForShift = sessionActivities.length;
+            const pendingActivities = sessionActivities.filter(act => !act.isCompleted);
+            const pendingCount = pendingActivities.length;
+            const completedCount = completedToday.length;
+            
+            let progressPercent = 0;
+            if (totalActivitiesForShift > 0) {
+                progressPercent = Math.round((completedCount / totalActivitiesForShift) * 100);
+            }
+
+            const progressBarFill = document.getElementById('progress-bar-fill');
+            const progressPercentText = document.getElementById('progress-percent-text');
+            if(progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
+            if(progressPercentText) progressPercentText.textContent = `${progressPercent}%`;
+
+            const now = new Date();
+            const currentTimeStr = now.toTimeString().slice(0, 5);
+            const overdueActivities = pendingActivities.filter(act => 
+                !act.isContinuous && 
+                act.alarmTime && 
+                currentTimeStr > act.alarmTime && 
+                !act.startTimeRecord
+            );
+            
+            const progressBarOverdue = document.getElementById('progress-bar-overdue');
+            const progressOverdueText = document.getElementById('progress-overdue-text');
+            if(progressBarOverdue) {
+                 const overduePercent = pendingCount > 0 ? (overdueActivities.length / pendingCount) * 100 : 0;
+                 progressBarOverdue.style.width = `${overduePercent}%`;
+            }
+            if(progressOverdueText) progressOverdueText.textContent = `${overdueActivities.length} de ${pendingCount}`;
+            
+            let totalElapsedTime = 0;
+            sessionActivities.forEach(act => {
+                if (act.timerInterval) {
+                    totalElapsedTime += Math.floor((Date.now() - act.startTime) / 1000);
+                } else {
+                    totalElapsedTime += act.elapsedTime || 0;
+                }
+            });
+            
+            const formattedTotalTime = new Date(totalElapsedTime * 1000).toISOString().substr(11, 8);
+            const totalTimeText = document.getElementById('total-time-text');
+            if(totalTimeText) totalTimeText.textContent = formattedTotalTime;
+
+            const dedicatedTimeGoalInSeconds = 8 * 3600; // 8 horas em segundos
+            const dedicatedTimePercentage = Math.min((totalElapsedTime / dedicatedTimeGoalInSeconds) * 100, 100);
+            const dedicatedTimeBar = document.getElementById('dedicated-time-bar');
+            if (dedicatedTimeBar) {
+                dedicatedTimeBar.style.width = `${dedicatedTimePercentage}%`;
+            }
+
+            // Renderiza os timers específicos para atividades contínuas
+            const continuousTimersContainer = document.getElementById('continuous-timers-dashboard');
+            if (continuousTimersContainer) {
+                continuousTimersContainer.innerHTML = '';
+                const continuousToTrack = [
+                    'Abertura e fechamento de Árvore de Decisão | Escalation',
+                    'Apoio Operacional',
+                    'Horário de Refeição'
+                ];
+                
+                continuousToTrack.forEach(title => {
+                    const activity = sessionActivities.find(a => a.text === title && a.isContinuous);
+                    let elapsedTime = 0;
+                    if (activity) {
+                        elapsedTime = activity.timerInterval 
+                            ? Math.floor((Date.now() - activity.startTime) / 1000) 
+                            : (activity.elapsedTime || 0);
+                    }
+                    const formattedTime = new Date(elapsedTime * 1000).toISOString().substr(11, 8);
+
+                    continuousTimersContainer.innerHTML += `
+                        <div class="flex flex-col items-center">
+                            <span class="text-base font-medium text-gray-400 mb-2 truncate" title="${title}">${title}</span>
+                            <p class="text-2xl font-semibold font-mono text-yellow-400">${formattedTime}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function renderShortcuts() {
+            if (!shortcutsContainer) return;
+
+            const shortcutActivities = sessionActivities.filter(act => act.isShortcut && !act.isCompleted);
+            
+            shortcutsContainer.innerHTML = ''; 
+            if (shortcutActivities.length > 0) {
+                shortcutsSection.classList.remove('hidden');
+                shortcutActivities.forEach(activity => {
+                    const isRunning = !!activity.timerInterval;
+                    const button = document.createElement('button');
+                    button.className = `p-3 rounded-lg text-white font-semibold transition-colors flex items-center gap-2 ${isRunning ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-700 hover:bg-gray-600'}`;
+                    button.onclick = () => startShortcutActivity(activity.id);
+
+                    const icon = isRunning ? 
+                        `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg>` :
+                        `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>`;
+                    
+                    button.innerHTML = `${icon} ${activity.text}`;
+                    shortcutsContainer.appendChild(button);
+                });
+            } else {
+                shortcutsSection.classList.add('hidden');
+            }
+        }
+
+        function renderActivities() {
+            const isAdmin = activeUser === 'ADMIN';
+
+            if (isAdmin) {
+                const masterActivityListEl = document.getElementById('master-activity-list');
+                if (!masterActivityListEl) return;
+                if (activityControls) activityControls.style.display = 'flex';
+
+                let activitiesToDisplay = [...masterActivities]; // Criar uma cópia para não alterar a original
+
+                // Aplicar filtro de visualização
+                if (currentViewFilter !== 'all') {
+                    activitiesToDisplay = activitiesToDisplay.filter(act => {
+                        return act.shifts && act.shifts.includes(currentViewFilter);
+                    });
+                }
+
+                // Aplicar ordenação
+                sortActivities(activitiesToDisplay);
+
+                masterActivityListEl.innerHTML = '';
+                
+                if (editingActivityId) {
+                    const mainActivity = masterActivities.find(a => a.id === editingActivityId);
+                    if (mainActivity) {
+                        // Agrupa atividades com o mesmo nome e status de 'contínua' para edição unificada
+                        const groupedActivities = masterActivities.filter(a => a.text === mainActivity.text && a.isContinuous === mainActivity.isContinuous);
+                        const groupIds = groupedActivities.map(a => a.id);
+
+                        const commonData = {
+                            text: mainActivity.text,
+                            description: mainActivity.description || '',
+                            predefinedComment: mainActivity.predefinedComment || '',
+                            isContinuous: mainActivity.isContinuous,
+                            isShortcut: mainActivity.isShortcut,
+                            daysOfWeek: mainActivity.daysOfWeek || [],
+                            shifts: {}
+                        };
+
+                        groupedActivities.forEach(act => {
+                            if (act.shifts && act.shifts.length > 0) {
+                                const shiftKey = act.shifts[0];
+                                commonData.shifts[shiftKey] = { alarmTime: act.alarmTime };
+                            }
+                        });
+
+                        const isContinuousChecked = commonData.isContinuous ? 'checked' : '';
+                        const isShortcutChecked = commonData.isShortcut ? 'checked' : '';
+                        const alarmSectionClass = commonData.isContinuous ? 'hidden' : '';
+
+                        let daysOfWeekHTML = '';
+                        DAY_ABBREVIATIONS.forEach((day, index) => {
+                            const dayValue = index;
+                            const isChecked = commonData.daysOfWeek.includes(dayValue) ? 'checked' : '';
+                            daysOfWeekHTML += `<label class="flex items-center gap-2"><input type="checkbox" value="${dayValue}" class="form-checkbox edit-day-of-week" ${isChecked}> ${day}</label>`;
+                        });
+
+                        let shiftsHTML = '';
+                        Object.keys(SHIFTS).forEach(shiftKey => {
+                            const shiftName = `T${Object.keys(SHIFTS).indexOf(shiftKey) + 1}`;
+                            const isChecked = commonData.shifts[shiftKey] ? 'checked' : '';
+                            shiftsHTML += `<label class="flex items-center gap-2"><input type="checkbox" value="${shiftKey}" data-shift-name="${shiftName}" class="form-checkbox edit-shift" ${isChecked}> ${shiftName} (${SHIFTS[shiftKey]})</label>`;
+                        });
+                        
+                        const editHTML = `
+                        <div id="edit-form-container" class="bg-gray-700 p-4 rounded-lg space-y-4 border-2 border-blue-500">
+                            <input type="text" value="${commonData.text}" id="edit-group-title" placeholder="Nome da Atividade" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white text-lg font-semibold">
+                            <textarea id="edit-group-desc" placeholder="Descrição" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white" rows="2">${commonData.description}</textarea>
+                            <textarea id="edit-group-predefined-comment" placeholder="Comentário Padrão" class="w-full bg-gray-600 border border-gray-500 rounded-lg px-3 py-2 text-white" rows="2">${commonData.predefinedComment}</textarea>
+                            
+                            <div class="flex items-center gap-6 mt-2">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="edit-group-continuous" class="form-checkbox bg-gray-700 border-gray-600 text-blue-500 rounded focus:ring-blue-500" ${isContinuousChecked}>
+                                    <label for="edit-group-continuous" class="text-sm text-gray-300">Atividade Contínua</label>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="edit-group-shortcut" class="form-checkbox bg-gray-700 border-gray-600 text-blue-500 rounded focus:ring-blue-500" ${isShortcutChecked}>
+                                    <label for="edit-group-shortcut" class="text-sm text-gray-300">Atalho na tela inicial</label>
+                                </div>
+                            </div>
+
+                            <div id="edit-alarm-related-settings" class="${alarmSectionClass}">
+                                <div class="mt-4">
+                                    <label class="text-sm text-gray-300 block mb-2">Dias da Semana:</label>
+                                    <div id="edit-days-of-week-selector" class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                        ${daysOfWeekHTML}
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="text-sm text-gray-300 block mb-2">Turnos:</label>
+                                    <div id="edit-shifts-selector" class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                        ${shiftsHTML}
+                                    </div>
+                                </div>
+                                <div id="edit-alarm-inputs-container" class="mt-4 space-y-2">
+                                    <!-- Inputs de alarme dinâmicos -->
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end gap-3 pt-4 border-t border-gray-600">
+                                <button class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-md" onclick="cancelEditActivity()">Cancelar</button>
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md" onclick="saveGroupedActivityEdit('${groupIds.join(',')}')">Salvar</button>
+                            </div>
+                        </div>`;
+
+                        masterActivityListEl.innerHTML = editHTML;
+                        
+                        const editShiftsSelector = document.getElementById('edit-shifts-selector');
+                        const editContinuousCheckbox = document.getElementById('edit-group-continuous');
+                        
+                        function updateAlarmInputs() {
+                            const alarmContainer = document.getElementById('edit-alarm-inputs-container');
+                            if (!alarmContainer) return;
+                            alarmContainer.innerHTML = '';
+                            document.querySelectorAll('#edit-shifts-selector input:checked').forEach(checkbox => {
+                                const shiftKey = checkbox.value;
+                                const shiftName = checkbox.dataset.shiftName;
+                                const existingAlarmTime = commonData.shifts[shiftKey] ? commonData.shifts[shiftKey].alarmTime : '';
+                                alarmContainer.innerHTML += `
+                                    <div class="flex items-center gap-2">
+                                        <label for="edit-alarm-input-${shiftKey}" class="text-sm text-gray-300 w-24">Alarme ${shiftName}:</label>
+                                        <input type="time" id="edit-alarm-input-${shiftKey}" value="${existingAlarmTime || ''}" class="bg-gray-600 border border-gray-500 rounded-lg px-3 py-1 text-white">
+                                    </div>`;
+                            });
+                        }
+
+                        if(editShiftsSelector) editShiftsSelector.addEventListener('change', updateAlarmInputs);
+                        if(editContinuousCheckbox) editContinuousCheckbox.addEventListener('change', () => {
+                             document.getElementById('edit-alarm-related-settings').classList.toggle('hidden', editContinuousCheckbox.checked);
+                        });
+
+                        updateAlarmInputs();
+                        
+                        return; 
+                    }
+                }
+
+                if (activitiesToDisplay.length === 0) {
+                    masterActivityListEl.innerHTML = `<p class="text-center text-gray-500">Nenhuma atividade padrão encontrada para os filtros selecionados.</p>`;
+                } else {
+                    activitiesToDisplay.forEach(activity => {
+                        masterActivityListEl.innerHTML += createActivityHTML(activity, {}, true);
+                    });
+                }
+                return; // Encerra a função após renderizar a visão do admin
+            }
+            
+            // --- LÓGICA PARA USUÁRIOS NORMAIS ---
+            if(activityControls) activityControls.style.display = 'none';
+
+            let activitiesToDisplay = sessionActivities;
+
+            // Ordena as atividades por horário do alarme para usuários comuns
+            activitiesToDisplay.sort((a, b) => {
+                if (a.isContinuous && !b.isContinuous) return 1;
+                if (!a.isContinuous && b.isContinuous) return -1;
+                const valA = a.alarmTime || '23:59';
+                const valB = b.alarmTime || '23:59';
+                if (valA < valB) return -1;
+                if (valA > valB) return 1;
+                return 0;
+            });
+            
+            const pendingActivities = activitiesToDisplay.filter(act => !act.isCompleted);
+            const scheduledPending = pendingActivities.filter(a => !a.isContinuous);
+            const continuousPending = pendingActivities.filter(a => a.isContinuous);
+
+            const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+            const userHistory = history[activeUser] || {};
+            const sortedDates = Object.keys(userHistory).sort((a, b) => new Date(b) - new Date(a));
+            const selectedDate = dateFilterSelect.value;
+
+
+            pendingActivityListEl.innerHTML = '';
+            continuousActivityListEl.innerHTML = '';
+            completedActivityListEl.innerHTML = '';
+
+            const isPendingTabActive = pendingTab.classList.contains('border-blue-500');
+
+            // RENDER PENDING SCHEDULED ACTIVITIES
+            if (scheduledPending.length === 0) {
+                pendingActivityListEl.innerHTML = `<p class="text-center text-gray-500">Nenhuma atividade agendada pendente.</p>`;
+            } else {
+                scheduledPending.forEach(activity => {
+                    const sessionActivity = sessionActivities.find(sa => sa.id === activity.id) || {};
+                    pendingActivityListEl.innerHTML += createActivityHTML(activity, sessionActivity, isAdmin);
+                });
+            }
+
+            // RENDER PENDING CONTINUOUS ACTIVITIES
+            if(continuousPending.length > 0 && isPendingTabActive) {
+                continuousActivitySection.classList.remove('hidden');
+                activitySeparator.classList.remove('hidden');
+                 continuousPending.forEach(activity => {
+                    const sessionActivity = sessionActivities.find(sa => sa.id === activity.id) || {};
+                    continuousActivityListEl.innerHTML += createActivityHTML(activity, sessionActivity, isAdmin);
+                });
+            } else {
+                 continuousActivitySection.classList.add('hidden');
+                 activitySeparator.classList.add('hidden');
+            }
+
+
+            // RENDER COMPLETED ACTIVITIES
+            if (sortedDates.length === 0 || !selectedDate) {
+                completedActivityListEl.innerHTML = `<p class="text-center text-gray-500">Nenhuma atividade concluída.</p>`;
+            } else {
+                
+                const activitiesForDate = userHistory[selectedDate] || [];
+                const date = new Date(selectedDate);
+                // Adiciona um dia para corrigir a diferença de fuso horário na formatação
+                date.setDate(date.getDate() + 1);
+                const formattedDate = date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+
+                let completedCount = 0, partialCount = 0, notDoneCount = 0;
+                activitiesForDate.forEach(activity => {
+                    if (activity.completionStatus === 'partial') partialCount++;
+                    else if (activity.completionStatus === 'not_done') notDoneCount++;
+                    else completedCount++;
+                });
+
+                let summaryHTML = `<div class="flex flex-wrap justify-center sm:justify-end items-center gap-x-4 gap-y-1 text-sm font-medium mt-2 sm:mt-0">`;
+                if (completedCount > 0) summaryHTML += `<span class="text-green-400 flex items-center gap-1">${completedCount} Concluída(s) ✅</span>`;
+                if (partialCount > 0) summaryHTML += `<span class="text-orange-400 flex items-center gap-1">${partialCount} Parcial(is) ⚠️</span>`;
+                if (notDoneCount > 0) summaryHTML += `<span class="text-red-400 flex items-center gap-1">${notDoneCount} Não Realizada(s) 🚨</span>`;
+                summaryHTML += `</div>`;
+
+
+                let dateSectionHTML = `
+                    <div class="mt-2">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-2 border-b border-gray-700 pb-2">
+                            <h4 class="text-md font-semibold text-gray-400">${formattedDate}</h4>
+                            ${summaryHTML}
+                        </div>
+                        <div class="space-y-4">`;
+                
+                if (activitiesForDate.length === 0) {
+                     dateSectionHTML += `<p class="text-center text-gray-500">Nenhuma atividade concluída para esta data.</p>`;
+                } else {
+                    activitiesForDate.sort((a,b) => new Date(b.completionTimeRecord) - new Date(a.completionTimeRecord)).forEach(activity => {
+                         const descriptionHTML = activity.description ? `<p class="text-sm text-gray-400">${activity.description}</p>` : '';
+                        const commentHTML = activity.comment ? `<p class="text-sm text-green-400 mt-1 italic">"${activity.comment}"</p>` : '';
+                        
+                        let statusIndicator = '';
+                        switch (activity.completionStatus) {
+                            case 'partial':
+                                statusIndicator = '<span class="text-orange-400 font-semibold">Parcialmente ⚠️</span>';
+                                break;
+                            case 'not_done':
+                                statusIndicator = '<span class="text-red-400 font-semibold">Não Realizada 🚨</span>';
+                                break;
+                            default: // 'completed'
+                                statusIndicator = '<span class="text-green-400 font-semibold">Concluída ✅</span>';
+                                break;
+                        }
+
+                        const startTimeString = activity.startTimeRecord ? new Date(activity.startTimeRecord).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                        const completionTimeString = activity.completionTimeRecord ? new Date(activity.completionTimeRecord).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                        const formattedDuration = new Date((activity.elapsedTime || 0) * 1000).toISOString().substr(11, 8);
+                        
+                        const adminButtonsHTML = isAdmin ? `
+                            <button class="text-gray-400 hover:text-white p-2 rounded-full transition-colors" title="Reabrir Atividade" onclick="uncompleteActivity('${activity.id}', '${selectedDate}')">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5" />
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.05 11H5.95a7 7 0 105.95-9.95" />
+                                </svg>
+                            </button>` : '';
+
+                        dateSectionHTML += `
+                            <div class="flex flex-col sm:flex-row items-center justify-between bg-gray-700/80 p-4 rounded-lg">
+                                <div class="flex-grow mb-3 sm:mb-0">
+                                    <div class="flex items-center gap-3">
+                                        <p class="text-gray-300 font-semibold line-through">${activity.text}</p>
+                                        ${statusIndicator}
+                                    </div>
+                                    ${descriptionHTML}
+                                    ${commentHTML}
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex flex-col items-end text-right text-sm text-gray-400">
+                                        <span>Início: ${startTimeString}</span>
+                                        <span>Fim: ${completionTimeString}</span>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="text-xs text-gray-400">Duração</span>
+                                        <p class="font-mono text-lg text-green-400">${formattedDuration}</p>
+                                    </div>
+                                    <div class="flex items-center gap-1">${adminButtonsHTML}</div>
+                                </div>
+                            </div>`;
+                    });
+                }
+                 dateSectionHTML += `</div></div>`;
+                 completedActivityListEl.innerHTML = dateSectionHTML;
+            }
+
+            if (!isAdmin) {
+                renderDashboard();
+                renderShortcuts();
+            }
+        }
+        
+        window.toggleTimer = (id) => {
+            const activityToToggle = sessionActivities.find(a => a.id === id);
+            if (!activityToToggle || activityToToggle.isCompleted) return;
+
+            // Se for iniciar uma nova atividade, para qualquer outra que esteja rodando
+            if (!activityToToggle.timerInterval) {
+                sessionActivities.forEach(act => {
+                    if (act.timerInterval) {
+                        clearInterval(act.timerInterval);
+                        act.elapsedTime = Math.floor((Date.now() - act.startTime) / 1000);
+                        act.timerInterval = null;
+                    }
+                });
+            }
+
+            if (activityToToggle.timerInterval) { // Parando o timer
+                clearInterval(activityToToggle.timerInterval);
+                activityToToggle.elapsedTime = Math.floor((Date.now() - activityToToggle.startTime) / 1000);
+                activityToToggle.timerInterval = null;
+                if(activityInModal && activityInModal.id === id) {
+                    closeTimerModal();
+                }
+            } else { // Iniciando o timer
+                stopAlarmEffects();
+                
+                if (!activityToToggle.startTimeRecord) {
+                    activityToToggle.startTimeRecord = new Date();
+                }
+
+                activityToToggle.startTime = Date.now() - (activityToToggle.elapsedTime * 1000);
+                activityToToggle.timerInterval = setInterval(() => {
+                    renderActivities(); 
+                }, 1000);
+                openTimerModal(activityToToggle, true);
+            }
+            renderActivities();
+            saveDailyActivities();
+        };
+
+        window.startShortcutActivity = (id) => {
+            const activity = sessionActivities.find(a => a.id === id);
+            if (!activity || activity.isCompleted) return;
+
+            if (activity.timerInterval) {
+                // Se já estiver em execução, apenas mostra o modal
+                openTimerModal(activity, true);
+            } else {
+                // Se não estiver em execução, inicia (toggleTimer irá parar as outras)
+                toggleTimer(id);
+            }
+        };
+
+        window.completeActivity = (id) => {
+            const activityToComplete = sessionActivities.find(a => a.id === id);
+            if (!activityToComplete) return;
+
+            const isRunning = !!activityToComplete.timerInterval;
+            openTimerModal(activityToComplete, isRunning, true);
+        };
+
+        function addActivityToHistory(activity) {
+            const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+            // O dateKey agora é baseado na data em que o turno começou (shiftDate), não na data de conclusão.
+            // Isso garante que atividades do T3 (16h-00h) concluídas após a meia-noite fiquem no dia correto.
+            const dateKey = activity.shiftDate || new Date(activity.startTimeRecord || activity.completionTimeRecord).toISOString().split('T')[0];
+
+            if (!history[activeUser]) {
+                history[activeUser] = {};
+            }
+            if (!history[activeUser][dateKey]) {
+                history[activeUser][dateKey] = [];
+            }
+
+            // Remove duplicados para o mesmo dia antes de adicionar a nova versão
+            history[activeUser][dateKey] = history[activeUser][dateKey].filter(a => a.id !== activity.id);
+
+            const historyEntry = {
+                id: activity.id,
+                text: activity.text,
+                description: activity.description,
+                comment: activity.comment,
+                shiftDate: dateKey, // Salva a data do turno no histórico
+                startTimeRecord: activity.startTimeRecord,
+                completionTimeRecord: activity.completionTimeRecord,
+                elapsedTime: activity.elapsedTime,
+                completionStatus: activity.completionStatus,
+            };
+
+            history[activeUser][dateKey].push(historyEntry);
+            localStorage.setItem('logisticsControlTower_completedHistory', JSON.stringify(history));
+        }
+
+        function _finalizeActivityCompletion(id, status = 'completed') {
+            const activityToComplete = sessionActivities.find(a => a.id === id);
+            if (!activityToComplete) return;
+
+            // Cancela qualquer alarme adiado se a atividade for concluída
+            stopAlarmEffects();
+            
+            // Garante que o comentário seja salvo antes de finalizar
+            if (activityInModal && activityInModal.id === id) {
+                 const currentCommentInput = document.getElementById('comment-input');
+                 activityToComplete.comment = currentCommentInput ? currentCommentInput.value : '';
+                 const allSavedComments = JSON.parse(localStorage.getItem('logisticsControlTower_comments')) || {};
+                 if (!allSavedComments[activeUser]) {
+                    allSavedComments[activeUser] = {};
+                 }
+                 allSavedComments[activeUser][activityToComplete.id] = activityToComplete.comment;
+                 localStorage.setItem('logisticsControlTower_comments', JSON.stringify(allSavedComments));
+            }
+
+            if (activityToComplete.timerInterval) {
+                clearInterval(activityToComplete.timerInterval);
+                activityToComplete.elapsedTime = Math.floor((Date.now() - activityToComplete.startTime) / 1000);
+                activityToComplete.timerInterval = null;
+            }
+
+            activityToComplete.isCompleted = true;
+            activityToComplete.completionTimeRecord = new Date();
+            activityToComplete.completionStatus = status;
+
+            if (!activityToComplete.startTimeRecord) {
+                activityToComplete.startTimeRecord = new Date();
+            }
+            
+            addActivityToHistory(activityToComplete);
+            saveDailyActivities();
+
+            if (activityInModal && activityInModal.id === id) {
+                closeTimerModal();
+            }
+
+            renderActivities();
+        }
+
+        function openTimerModal(activity, isRunning, forceCommentMode = false) {
+            if (activeTimerModalInterval) clearInterval(activeTimerModalInterval);
+            
+            activityInModal = activity;
+            timerActivityText.innerHTML = `<h3 class="text-2xl font-bold text-white mb-2">${activity.text}</h3>
+                                           <p class="text-base font-normal text-gray-400">${activity.description || ''}</p>`;
+            timerActivityAlarm.textContent = activity.alarmTime ? `Alarme: ${activity.alarmTime}` : '';
+            
+            const showCommentForComplete = () => {
+                timerButtons.classList.add('hidden');
+                commentSection.classList.remove('hidden');
+
+                commentSection.innerHTML = `
+                    <textarea id="comment-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" rows="3" placeholder="Digite seu comentário...">${activity.comment || ''}</textarea>
+                    <div id="completion-buttons" class="flex flex-col sm:flex-row justify-center items-stretch gap-4">
+                        <button class="w-full sm:w-auto flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform duration-200 hover:scale-105 flex items-center justify-center text-center" onclick="_finalizeActivityCompletion('${activity.id}', 'not_done')">Não Realizada 🚨</button>
+                        <button class="w-full sm:w-auto flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform duration-200 hover:scale-105 flex items-center justify-center text-center" onclick="_finalizeActivityCompletion('${activity.id}', 'partial')">Parcialmente ⚠️</button>
+                        <button class="w-full sm:w-auto flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform duration-200 hover:scale-105 flex items-center justify-center text-center" onclick="_finalizeActivityCompletion('${activity.id}', 'completed')">Concluída ✅</button>
+                    </div>
+                `;
+                const commentInputEl = document.getElementById('comment-input');
+                if(commentInputEl) commentInputEl.focus();
+            };
+
+            if (forceCommentMode) {
+                 timerButtons.innerHTML = '';
+                 showCommentForComplete();
+            } else if (isRunning) {
+                 timerButtons.classList.remove('hidden');
+                 commentSection.classList.add('hidden');
+                 timerButtons.innerHTML = `
+                    <div class="flex flex-col items-center gap-4 w-full">
+                        <div class="flex justify-center gap-4 w-full">
+                            <button id="stop-timer-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-6 rounded-lg transition duration-300 text-lg flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" /></svg>
+                                Parar
+                            </button>
+                            <button id="complete-modal-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 text-lg flex items-center justify-center">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Concluir
+                            </button>
+                        </div>
+                        <button id="add-comment-btn" title="Incluir Comentário" class="bg-gray-600 hover:bg-gray-500 text-white p-3 rounded-full transition duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </button>
+                    </div>`;
+
+                 document.getElementById('stop-timer-btn').onclick = () => window.toggleTimer(activity.id);
+                 
+                 const showCommentForSave = () => {
+                    timerButtons.classList.add('hidden');
+                    commentSection.classList.remove('hidden');
+                    commentSection.innerHTML = `
+                         <textarea id="comment-input" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white" rows="3" placeholder="Digite seu comentário...">${activity.comment || ''}</textarea>
+                         <button id="dynamic-save-comment-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-10 rounded-lg transition duration-300 text-lg">Salvar</button>
+                    `;
+                    const dynamicSaveBtn = document.getElementById('dynamic-save-comment-btn');
+                    if (dynamicSaveBtn) {
+                        dynamicSaveBtn.onclick = () => {
+                            saveCommentOnly();
+                            timerButtons.classList.remove('hidden');
+                            commentSection.classList.add('hidden');
+                        };
+                    }
+                    const commentInputEl = document.getElementById('comment-input');
+                    if(commentInputEl) commentInputEl.focus();
+                 };
+
+                 document.getElementById('add-comment-btn').onclick = showCommentForSave;
+                 document.getElementById('complete-modal-btn').onclick = showCommentForComplete;
+            } else { // Modo Alerta / Iniciar
+                 timerButtons.classList.remove('hidden');
+                 commentSection.classList.add('hidden');
+                 timerButtons.innerHTML = `
+                    <button id="start-timer-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-10 rounded-lg transition duration-300 text-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                        Iniciar
+                    </button>`;
+                 document.getElementById('start-timer-btn').onclick = () => window.toggleTimer(activity.id);
+                 timerDisplay.textContent = new Date(activity.elapsedTime * 1000).toISOString().substr(11, 8);
+            }
+
+            // Garante que o display do timer continue atualizando se estiver rodando, mesmo no modo de comentário.
+            if (isRunning) {
+                const updateDisplay = () => {
+                    const elapsedTime = Math.floor((Date.now() - activity.startTime) / 1000);
+                    timerDisplay.textContent = new Date(elapsedTime * 1000).toISOString().substr(11, 8);
+                };
+                updateDisplay();
+                activeTimerModalInterval = setInterval(updateDisplay, 1000);
+            }
+
+            // A exibição do modal é sempre necessária
+            timerModal.classList.remove('hidden');
+            setTimeout(() => timerModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+        }
+
+        function closeTimerModal() {
+             stopAlarmEffects();
+             
+             if (activeTimerModalInterval) clearInterval(activeTimerModalInterval);
+             activeTimerModalInterval = null;
+             activityInModal = null;
+             timerModalContent.classList.remove('flash-continuous');
+             timerModalContent.classList.add('scale-95', 'opacity-0');
+             setTimeout(() => timerModal.classList.add('hidden'), 300);
+        }
+
+        function saveCommentOnly() {
+             if (activityInModal) {
+                const currentCommentInput = document.getElementById('comment-input');
+                activityInModal.comment = currentCommentInput ? currentCommentInput.value : '';
+                const allSavedComments = JSON.parse(localStorage.getItem('logisticsControlTower_comments')) || {};
+                if (!allSavedComments[activeUser]) {
+                    allSavedComments[activeUser] = {};
+                }
+                allSavedComments[activeUser][activityInModal.id] = activityInModal.comment;
+                localStorage.setItem('logisticsControlTower_comments', JSON.stringify(allSavedComments));
+                saveDailyActivities();
+                renderActivities();
+            }
+        }
+
+        window.deleteActivity = (id) => {
+            masterActivities = masterActivities.filter(a => a.id !== id);
+            refreshSessionActivities();
+            renderActivities();
+            saveState();
+        };
+
+        // --- Lógica do Alarme ---
+        function checkAlarms() {
+            if (activeUser === 'ADMIN') return;
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+
+            sessionActivities.forEach(activity => {
+                if (activity.alarmTime === currentTime && !activity.alarmTriggered && !activity.isCompleted && !activity.startTimeRecord) {
+                    activity.alarmTriggered = true;
+                    triggerAlarm(activity);
+                }
+            });
+        }
+
+        function triggerAlarm(activity) {
+            stopAlarmEffects(); // Stop any previous alarm
+            
+            // O synth object deve existir e o som deve estar habilitado.
+            // O synth agora é inicializado APENAS pelo clique do usuário no botão de som.
+            if (isSoundEnabled && synth) {
+                const playSound = () => synth.triggerAttackRelease("C5", "8n");
+                playSound();
+                alarmSoundInterval = setInterval(playSound, 2000);
+            }
+
+            openTimerModal(activity, false); // Abre no modo "Iniciar"
+            timerModalContent.classList.add('flash-continuous');
+        }
+
+        function stopAlarmEffects() {
+            if (alarmSoundInterval) {
+                clearInterval(alarmSoundInterval);
+                alarmSoundInterval = null;
+            }
+            if (synth) {
+                synth.triggerRelease();
+            }
+            timerModalContent.classList.remove('flash-continuous');
+        }
+
+        // --- Gerenciamento de Estado (localStorage) ---
+        function saveState() {
+            localStorage.setItem('logisticsControlTower_masterActivities', JSON.stringify(masterActivities));
+            localStorage.setItem('logisticsControlTower_scales', JSON.stringify(scales));
+            localStorage.setItem('logisticsControlTower_passwords', JSON.stringify(userPasswords));
+        }
+
+        function saveDailyActivities() {
+            if (activeUser === 'ADMIN') return;
+            const todayKey = new Date().toISOString().split('T')[0];
+            const dailyActivitiesStore = JSON.parse(localStorage.getItem('logisticsControlTower_dailyActivities')) || {};
+            if (!dailyActivitiesStore[activeUser]) {
+                dailyActivitiesStore[activeUser] = {};
+            }
+            dailyActivitiesStore[activeUser][todayKey] = sessionActivities;
+            localStorage.setItem('logisticsControlTower_dailyActivities', JSON.stringify(dailyActivitiesStore));
+        }
+
+        function loadState() {
+            const savedMasterActivities = localStorage.getItem('logisticsControlTower_masterActivities');
+            if (savedMasterActivities) {
+                try {
+                    masterActivities = JSON.parse(savedMasterActivities);
+                } catch(e) {
+                    console.error("Failed to parse master activities, resetting to default.", e);
+                    masterActivities = JSON.parse(JSON.stringify(initialMasterActivities));
+                }
+            } else {
+                masterActivities = JSON.parse(JSON.stringify(initialMasterActivities));
+            }
+            
+            const savedScales = localStorage.getItem('logisticsControlTower_scales');
+            const savedPasswords = localStorage.getItem('logisticsControlTower_passwords');
+            
+            if (savedPasswords) {
+                 try { 
+                    userPasswords = JSON.parse(savedPasswords); 
+                } catch(e) { 
+                    console.error("Failed to parse passwords, resetting.", e);
+                    userPasswords = {}; 
+                }
+            }
+
+            if (savedScales) {
+                try {
+                    const loadedScales = JSON.parse(savedScales);
+                    for(const scaleKey in scales) {
+                        if(loadedScales && loadedScales[scaleKey]) {
+                           if(loadedScales[scaleKey].name) scales[scaleKey].name = loadedScales[scaleKey].name;
+                           if(loadedScales[scaleKey].baseDate) scales[scaleKey].baseDate = loadedScales[scaleKey].baseDate;
+                           if(loadedScales[scaleKey].lastBaseDate) scales[scaleKey].lastBaseDate = loadedScales[scaleKey].lastBaseDate;
+                        }
+                    }
+                } catch(e) {
+                    console.error("Failed to parse scales.", e);
+                }
+            }
+        }
+
+        function cleanupPreviousShiftActivities() {
+            if (activeUser === 'ADMIN') return;
+
+            const dailyActivitiesStore = JSON.parse(localStorage.getItem('logisticsControlTower_dailyActivities')) || {};
+            const userActivities = dailyActivitiesStore[activeUser];
+            if (!userActivities) return;
+
+            const todayKey = new Date().toISOString().split('T')[0];
+            let needsUpdate = false;
+
+            for (const dateKey in userActivities) {
+                if (dateKey < todayKey) {
+                    needsUpdate = true;
+                    const oldActivities = userActivities[dateKey];
+                    oldActivities.forEach(activity => {
+                        if (!activity.isCompleted) {
+                            activity.isCompleted = true; // Mark as processed
+                            activity.completionStatus = 'not_done';
+                            activity.completionTimeRecord = new Date(`${dateKey}T23:59:59`);
+                            if (!activity.startTimeRecord) {
+                                activity.startTimeRecord = activity.completionTimeRecord;
+                            }
+                            addActivityToHistory(activity);
+                        }
+                    });
+                    delete dailyActivitiesStore[activeUser][dateKey];
+                }
+            }
+
+            if (needsUpdate) {
+                localStorage.setItem('logisticsControlTower_dailyActivities', JSON.stringify(dailyActivitiesStore));
+            }
+        }
+        
+        window.updateName = (inputElement) => {
+            const scale = inputElement.getAttribute('data-scale');
+            if(scales[scale]) {
+                scales[scale].name = inputElement.value;
+                saveState();
+            }
+        };
+
+        window.updateBaseDate = (inputElement) => {
+            const scale = inputElement.getAttribute('data-scale');
+            if (scales[scale] && inputElement.value && scales[scale].baseDate !== 'on_vacation') {
+                scales[scale].baseDate = `${inputElement.value}T00:00:00`;
+                saveState();
+                renderSchedules();
+            }
+        };
+
+        window.toggleVacation = (checkboxElement) => {
+            const scale = checkboxElement.getAttribute('data-scale');
+            if (!scales[scale]) return;
+
+            if (checkboxElement.checked) {
+                if (scales[scale].baseDate !== 'on_vacation') {
+                    scales[scale].lastBaseDate = scales[scale].baseDate;
+                }
+                scales[scale].baseDate = 'on_vacation';
+            } else {
+                scales[scale].baseDate = scales[scale].lastBaseDate || new Date().toISOString().split('T')[0] + 'T00:00:00';
+            }
+            saveState();
+            renderSchedules();
+        };
+
+        // --- Lógica do Bloco de Notas ---
+        function openNotepadModal() {
+            const savedNote = localStorage.getItem(`logisticsControlTower_notepad_${activeUser}`) || '';
+            notepadInput.value = savedNote;
+            notepadModal.classList.remove('hidden');
+            setTimeout(() => notepadModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+            notepadInput.focus();
+        }
+
+        function closeNotepadModal() {
+             notepadModalContent.classList.add('scale-95', 'opacity-0');
+             setTimeout(() => notepadModal.classList.add('hidden'), 300);
+        }
+
+        function saveNotepad() {
+            localStorage.setItem(`logisticsControlTower_notepad_${activeUser}`, notepadInput.value);
+        }
+
+        // --- Lógica de Ponte ---
+        function loadAndValidatePonteData() {
+            const savedPonte = localStorage.getItem('logisticsControlTower_ponte');
+            const todayKey = new Date().toISOString().split('T')[0];
+            
+            if (savedPonte) {
+                try {
+                    const parsedPonte = JSON.parse(savedPonte);
+                    if (parsedPonte.date === todayKey) {
+                        ponteData = parsedPonte;
+                    } else {
+                        ponteData = {}; // Expired
+                        localStorage.removeItem('logisticsControlTower_ponte');
+                    }
+                } catch (e) {
+                    ponteData = {}; // Invalid data
+                }
+            } else {
+                ponteData = {};
+            }
+        }
+
+        function getBridgedScales() {
+            if (!ponteData.bridges || Object.keys(ponteData.bridges).length === 0) {
+                return scales; // No active bridge, return original
+            }
+
+            const bridgedScales = JSON.parse(JSON.stringify(scales)); // Deep copy
+            
+            // Create a set to track processed scales to handle the swap correctly
+            const processed = new Set();
+            for (const scaleA in ponteData.bridges) {
+                if (processed.has(scaleA)) continue;
+
+                const scaleB = ponteData.bridges[scaleA];
+                
+                // Swap baseDate
+                const tempBaseDate = bridgedScales[scaleA].baseDate;
+                bridgedScales[scaleA].baseDate = bridgedScales[scaleB].baseDate;
+                bridgedScales[scaleB].baseDate = tempBaseDate;
+
+                processed.add(scaleA);
+                processed.add(scaleB);
+            }
+            return bridgedScales;
+        }
+        
+        window.openPonteModal = (targetScale) => {
+            targetPonteScale = targetScale;
+            const currentScales = getBridgedScales();
+            ponteConfirmationText.textContent = `Você tem certeza que deseja trocar seu turno com ${currentScales[targetScale].name} (Escala ${targetScale}) pelo resto do dia?`;
+            ponteModal.classList.remove('hidden');
+            setTimeout(() => ponteModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+        };
+
+        function closePonteModal() {
+            ponteModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                ponteModal.classList.add('hidden');
+                targetPonteScale = null;
+            }, 300);
+        }
+        
+        function createPonte() {
+            if (!targetPonteScale || !activeUser) return;
+            
+            const todayKey = new Date().toISOString().split('T')[0];
+            ponteData = {
+                date: todayKey,
+                bridges: {
+                    [activeUser]: targetPonteScale,
+                    [targetPonteScale]: activeUser
+                }
+            };
+            
+            localStorage.setItem('logisticsControlTower_ponte', JSON.stringify(ponteData));
+            closePonteModal();
+            
+            // Re-initialize to apply changes everywhere, especially for activity generation
+            // This is safer than trying to hot-swap everything.
+            localStorage.removeItem(`logisticsControlTower_dailyActivities`); // Force reload of activities
+            initializeMainApp();
+        }
+
+
+        // --- Mecanismo de Salvamento Automático ao Sair ---
+        function finalizeCurrentShiftActivitiesOnLogout() {
+            if (activeUser === 'ADMIN' || !sessionActivities || sessionActivities.length === 0) return;
+
+            const pendingActivities = sessionActivities.filter(act => !act.isCompleted);
+            if (pendingActivities.length === 0) return;
+
+            // Processa cada atividade pendente e a salva no histórico permanente
+            pendingActivities.forEach(activity => {
+                // Para qualquer cronômetro em execução
+                if (activity.timerInterval) {
+                    clearInterval(activity.timerInterval);
+                    activity.elapsedTime = Math.floor((Date.now() - activity.startTime) / 1000);
+                    activity.timerInterval = null;
+                }
+
+                // Marca como concluída
+                activity.isCompleted = true;
+                activity.completionTimeRecord = new Date(); // Define o tempo de conclusão para agora
+                
+                // Determina o status com base em se foi iniciada
+                if (activity.elapsedTime > 0 || activity.startTimeRecord) {
+                    activity.completionStatus = 'partial';
+                } else {
+                    activity.completionStatus = 'not_done';
+                    // Se nunca foi iniciada, o tempo de início é o mesmo que o fim
+                    activity.startTimeRecord = activity.completionTimeRecord;
+                }
+                
+                // Adiciona a atividade finalizada ao log de histórico permanente
+                addActivityToHistory(activity);
+            });
+
+            // Limpa o log de atividades diárias temporário para este usuário para hoje
+            const todayKey = new Date().toISOString().split('T')[0];
+            const dailyActivitiesStore = JSON.parse(localStorage.getItem('logisticsControlTower_dailyActivities')) || {};
+            if (dailyActivitiesStore[activeUser] && dailyActivitiesStore[activeUser][todayKey]) {
+                delete dailyActivitiesStore[activeUser][todayKey];
+                localStorage.setItem('logisticsControlTower_dailyActivities', JSON.stringify(dailyActivitiesStore));
+            }
+        }
+
+
+        // --- Exportar e Importar Dados ---
+        function exportData() {
+            const dataToExport = {};
+
+            // Itera sobre todas as chaves no localStorage para garantir que todos os dados sejam salvos.
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('logisticsControlTower_')) {
+                    // Ignora o usuário ativo para não logar automaticamente em outra máquina.
+                    if (key === 'logisticsControlTower_activeUser') continue;
+                    
+                    const data = localStorage.getItem(key);
+                    // Tenta analisar como JSON, se falhar, armazena como string.
+                    try {
+                        dataToExport[key] = JSON.parse(data);
+                    } catch (e) {
+                        dataToExport[key] = data;
+                    }
+                }
+            }
+            
+            dataToExport.backupVersion = '1.0';
+            dataToExport.exportDate = new Date().toISOString();
+
+            const jsonString = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            a.download = `backup_torre_de_controle_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function openImportConfirmModal(fileContent) {
+            fileToImportContent = fileContent;
+            importConfirmModal.classList.remove('hidden');
+            setTimeout(() => importConfirmModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+        }
+        
+        function closeImportConfirmModal() {
+            importConfirmModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                importConfirmModal.classList.add('hidden');
+                fileToImportContent = null;
+            }, 300);
+        }
+        
+        function processImport() {
+            if (!fileToImportContent) return;
+            
+            try {
+                const dataToImport = JSON.parse(fileToImportContent);
+                if (!dataToImport.backupVersion || !dataToImport.logisticsControlTower_masterActivities) {
+                    console.error("Arquivo de backup inválido ou corrompido.");
+                    closeImportConfirmModal();
+                    return;
+                }
+
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('logisticsControlTower_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
+                Object.keys(dataToImport).forEach(key => {
+                    if(key.startsWith('logisticsControlTower_')) {
+                        const value = dataToImport[key];
+                        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+                    }
+                });
+                
+                closeImportConfirmModal();
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50 text-white text-center p-4';
+                overlay.innerHTML = `<h2 class="text-3xl font-bold mb-4">Dados importados com sucesso!</h2><p class="text-lg">A aplicação será recarregada em 3 segundos...</p>`;
+                document.body.appendChild(overlay);
+
+                setTimeout(() => { location.reload(); }, 3000);
+
+            } catch(e) {
+                console.error("Erro ao processar o arquivo de importação:", e);
+                closeImportConfirmModal();
+            }
+        }
+
+        // --- Exportar PDF ---
+        function _autoCompletePendingActivities() {
+            const pendingActivities = sessionActivities.filter(act => !act.isCompleted);
+            pendingActivities.forEach(activity => {
+                if (activity.timerInterval) {
+                    clearInterval(activity.timerInterval);
+                    activity.elapsedTime = Math.floor((Date.now() - activity.startTime) / 1000);
+                    activity.timerInterval = null;
+                }
+
+                activity.isCompleted = true;
+                activity.completionTimeRecord = new Date();
+                
+                if (activity.elapsedTime > 0 || activity.startTimeRecord) {
+                    activity.completionStatus = 'partial';
+                } else {
+                    activity.completionStatus = 'not_done';
+                    // Se não foi iniciada, o tempo de início é o mesmo do fim.
+                    activity.startTimeRecord = activity.completionTimeRecord;
+                }
+                
+                addActivityToHistory(activity);
+            });
+
+            saveDailyActivities();
+            renderActivities(); 
+        }
+
+        function exportToPDF() {
+            const reportDateKey = dateFilterSelect.value;
+            const todayKey = new Date().toISOString().split('T')[0];
+            const pendingActivities = sessionActivities.filter(act => !act.isCompleted);
+
+            if (reportDateKey === todayKey && pendingActivities.length > 0) {
+                exportConfirmText.textContent = `Existem ${pendingActivities.length} atividades pendentes neste turno. Se você continuar, elas serão finalizadas automaticamente (como 'Não Realizada' ou 'Parcialmente') antes da exportação. Deseja continuar?`;
+                exportConfirmModal.classList.remove('hidden');
+                setTimeout(() => exportConfirmModalContent.classList.remove('scale-95', 'opacity-0'), 10);
+            } else {
+                _generatePDF();
+            }
+        }
+
+        function _generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+            const userHistory = history[activeUser] || {};
+            
+            const reportDateKey = dateFilterSelect.value;
+
+            if (!reportDateKey || !userHistory[reportDateKey]) {
+                alert("Nenhuma atividade concluída para a data selecionada.");
+                return;
+            }
+
+            const completedActivities = userHistory[reportDateKey] || [];
+            completedActivities.sort((a,b) => new Date(a.completionTimeRecord) - new Date(b.completionTimeRecord));
+
+            const userName = scales[activeUser].name;
+            const reportDate = new Date(reportDateKey);
+            reportDate.setDate(reportDate.getDate() + 1); // Adjust for timezone
+            const formattedDate = reportDate.toLocaleDateString('pt-BR');
+
+            doc.setFontSize(18);
+            doc.text("Relatório de Turno - Atividades Concluídas", 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text(`Operador: ${userName} (Escala ${activeUser})`, 14, 25);
+            doc.text(`Data: ${formattedDate}`, 14, 32);
+
+            let totalElapsedTime = 0;
+            completedActivities.forEach(act => { totalElapsedTime += act.elapsedTime || 0; });
+            const formattedTotalTime = new Date(totalElapsedTime * 1000).toISOString().substr(11, 8);
+            
+            doc.text(`Total de Atividades Concluídas: ${completedActivities.length}`, 196, 25, { align: 'right' });
+            doc.text(`Tempo Total Dedicado: ${formattedTotalTime}`, 196, 32, { align: 'right' });
+
+            const tableColumn = ["Atividade", "Status", "Início", "Fim", "Duração", "Comentário"];
+            const tableRows = [];
+
+            completedActivities.forEach(activity => {
+                const startTime = activity.startTimeRecord ? new Date(activity.startTimeRecord).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                const endTime = activity.completionTimeRecord ? new Date(activity.completionTimeRecord).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                const duration = new Date((activity.elapsedTime || 0) * 1000).toISOString().substr(11, 8);
+                const comment = activity.comment ? doc.splitTextToSize(activity.comment, 50) : '-';
+                const title = doc.splitTextToSize(activity.text, 50);
+                let statusText = 'Concluída';
+                if (activity.completionStatus === 'partial') statusText = 'Parcialmente';
+                else if (activity.completionStatus === 'not_done') statusText = 'Não Realizada';
+                tableRows.push([title, statusText, startTime, endTime, duration, comment]);
+            });
+
+            doc.autoTable({
+                head: [tableColumn], body: tableRows, startY: 40, theme: 'striped',
+                headStyles: { fillColor: [38, 50, 56] }, styles: { cellPadding: 2, fontSize: 8, valign: 'middle' },
+                columnStyles: { 0: { cellWidth: 50 }, 1: { cellWidth: 20 }, 5: { cellWidth: 'auto' } }
+            });
+
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Página ${i} de ${pageCount}`, 196, doc.internal.pageSize.height - 10, { align: 'right' });
+            }
+            doc.save(`Relatorio_Turno_${userName.replace(/ /g, '_')}_${reportDateKey}.pdf`);
+        }
+
+
+        // --- Loop Principal e Inicialização ---
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            currentTimeEl.textContent = now.toLocaleDateString('pt-BR', options);
+            checkAlarms();
+        }
+
+        function updateSoundIcon() {
+            if (isSoundEnabled) {
+                soundOnIcon.classList.remove('hidden');
+                soundOffIcon.classList.add('hidden');
+            } else {
+                soundOnIcon.classList.add('hidden');
+                soundOffIcon.classList.remove('hidden');
+            }
+        }
+
+        function initializeMainApp() {
+            exportPdfBtn = document.getElementById('export-pdf-btn');
+            if(exportPdfBtn) exportPdfBtn.addEventListener('click', exportToPDF);
+            
+            const savedSoundPref = localStorage.getItem('logisticsControlTower_soundEnabled');
+            isSoundEnabled = savedSoundPref === 'true';
+            updateSoundIcon();
+            
+            if (isSoundEnabled && typeof Tone !== 'undefined' && !synth) {
+                 const startAudio = async () => {
+                    try {
+                        if (Tone.context.state !== 'running') { await Tone.start(); }
+                        if (Tone.Transport.state !== 'started') { Tone.Transport.start(); }
+                        synth = new Tone.Synth().toDestination();
+                    } catch (e) {
+                        console.warn("Falha ao re-inicializar o áudio automaticamente.", e);
+                        isSoundEnabled = false;
+                        localStorage.setItem('logisticsControlTower_soundEnabled', 'false');
+                        updateSoundIcon();
+                    }
+                };
+                startAudio();
+            }
+
+            cleanupPreviousShiftActivities();
+            refreshSessionActivities();
+            const turnDashboard = document.getElementById('turn-dashboard');
+            
+            if (activeUser === 'ADMIN') {
+                if(turnDashboard) turnDashboard.classList.add('hidden');
+                if(shortcutsSection) shortcutsSection.classList.add('hidden');
+                if(document.getElementById('activities')) document.getElementById('activities').classList.add('hidden');
+                if(resetUserPasswordBtn) resetUserPasswordBtn.classList.remove('hidden');
+
+                loggedInUserContainer.innerHTML = `<div class="text-right">
+                                                <p class="text-2xl font-bold gradient-text">Administrador</p>
+                                                <p class="text-sm text-gray-400">Painel de Controle</p>
+                                           </div>`;
+                if(adminControlsSection) adminControlsSection.classList.remove('hidden');
+                if(scheduleCardsWrapper) scheduleCardsWrapper.style.maxHeight = scheduleCardsWrapper.scrollHeight + "px";
+                
+                newActivityTitleEl = document.getElementById('new-activity-title');
+                newActivityDescriptionEl = document.getElementById('new-activity-description');
+                newActivityPredefinedCommentEl = document.getElementById('new-activity-predefined-comment');
+                newActivityContinuousEl = document.getElementById('new-activity-continuous');
+                newActivityShortcutEl = document.getElementById('new-activity-shortcut');
+                const alarmSettingsDiv = document.getElementById('alarm-related-settings');
+                shiftsSelector = document.getElementById('shifts-selector');
+                alarmInputsContainer = document.getElementById('alarm-inputs-container');
+                addActivityBtn = document.getElementById('add-activity-btn');
+                selectAllDaysBtn = document.getElementById('select-all-days-btn');
+
+                if (addActivityBtn) { addActivityBtn.addEventListener('click', addActivity); }
+                if (newActivityTitleEl) { newActivityTitleEl.addEventListener('keypress', (e) => { if(e.key === 'Enter' && addActivityBtn) addActivityBtn.click(); }); }
+                if (selectAllDaysBtn) {
+                    selectAllDaysBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.querySelectorAll('#days-of-week-selector input[type="checkbox"]').forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+                    });
+                }
+                if (newActivityContinuousEl && alarmSettingsDiv) {
+                    newActivityContinuousEl.addEventListener('change', () => {
+                        alarmSettingsDiv.classList.toggle('hidden', newActivityContinuousEl.checked);
+                    });
+                }
+                if (shiftsSelector) {
+                    shiftsSelector.addEventListener('change', (e) => {
+                        const selectedShifts = document.querySelectorAll('#shifts-selector input:checked');
+                        alarmInputsContainer.innerHTML = '';
+                        selectedShifts.forEach(checkbox => {
+                            const shiftValue = checkbox.value;
+                            const shiftName = checkbox.dataset.shiftName;
+                            const alarmInputHTML = `
+                                <div class="flex items-center gap-2">
+                                    <label for="alarm-input-${shiftValue}" class="text-sm text-gray-300 w-20">Alarme ${shiftName}:</label>
+                                    <input type="time" id="alarm-input-${shiftValue}" class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                                </div>`;
+                            alarmInputsContainer.innerHTML += alarmInputHTML;
+                        });
+                    });
+                }
+                if (activityControls) {
+                    activityControls.addEventListener('click', (e) => {
+                        const sortBtn = e.target.closest('.sort-btn');
+                        const viewFilterBtn = e.target.closest('.view-filter-btn');
+
+                        if (sortBtn) {
+                             const sortKey = sortBtn.dataset.sort;
+                            if (currentSort.key === sortKey) {
+                                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                            } else {
+                                currentSort.key = sortKey;
+                                currentSort.direction = 'asc';
+                            }
+                            document.querySelectorAll('.sort-btn').forEach(btn => {
+                                const key = btn.dataset.sort;
+                                if (key === 'name') btn.innerHTML = 'Nome';
+                                if (key === 'alarmTime') btn.innerHTML = 'Horário';
+                                if (key === 'shifts') btn.innerHTML = 'Turno';
+                            });
+                            sortBtn.innerHTML += currentSort.direction === 'asc' ? ' &uarr;' : ' &darr;';
+                            renderActivities();
+                        }
+
+                        if (viewFilterBtn) {
+                            currentViewFilter = viewFilterBtn.dataset.viewFilter;
+                            document.querySelectorAll('.view-filter-btn').forEach(btn => {
+                                btn.classList.remove('bg-blue-600', 'text-white');
+                                btn.classList.add('bg-gray-600', 'hover:bg-gray-500', 'text-gray-300');
+                            });
+                            viewFilterBtn.classList.add('bg-blue-600', 'text-white');
+                            viewFilterBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500', 'text-gray-300');
+                            renderActivities();
+                        }
+                    });
+                }
+
+            } else {
+                if(turnDashboard) turnDashboard.classList.remove('hidden');
+                if(shortcutsSection) shortcutsSection.classList.remove('hidden');
+                if(document.getElementById('activities')) document.getElementById('activities').classList.remove('hidden');
+                if(resetUserPasswordBtn) resetUserPasswordBtn.classList.add('hidden');
+
+                const currentScales = getBridgedScales();
+                loggedInUserContainer.innerHTML = `<div class="text-right">
+                                                <p class="text-2xl font-bold gradient-text">${currentScales[activeUser].name}</p>
+                                                <p class="text-sm text-gray-400">Escala ${activeUser}</p>
+                                           </div>`;
+                if(adminControlsSection) adminControlsSection.classList.add('hidden');
+                if(scheduleCardsWrapper) scheduleCardsWrapper.style.maxHeight = "0px";
+            }
+            renderSchedules();
+            renderActivities();
+            updateClock();
+            if(mainAppClockInterval) clearInterval(mainAppClockInterval);
+            if(mainAppSchedulesInterval) clearInterval(mainAppSchedulesInterval);
+            mainAppClockInterval = setInterval(updateClock, 1000);
+            mainAppSchedulesInterval = setInterval(renderSchedules, 30000);
+        }
+
+        // --- Event Listeners Globais ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            loadAndValidatePonteData();
+            checkLoggedInUser();
+            
+            pendingTab.addEventListener('click', () => {
+                pendingTab.classList.add('border-blue-500', 'text-white');
+                pendingTab.classList.remove('border-transparent', 'text-gray-400');
+                completedTab.classList.add('border-transparent', 'text-gray-400');
+                completedTab.classList.remove('border-blue-500', 'text-white');
+
+                pendingActivityListEl.classList.remove('hidden');
+                completedActivityListEl.classList.add('hidden');
+                completedControls.classList.add('hidden');
+                renderActivities();
+            });
+
+            completedTab.addEventListener('click', () => {
+                completedTab.classList.add('border-blue-500', 'text-white');
+                completedTab.classList.remove('border-transparent', 'text-gray-400');
+                pendingTab.classList.add('border-transparent', 'text-gray-400');
+                pendingTab.classList.remove('border-blue-500', 'text-white');
+
+                completedActivityListEl.classList.remove('hidden');
+                pendingActivityListEl.classList.add('hidden');
+                continuousActivitySection.classList.add('hidden');
+                activitySeparator.classList.add('hidden');
+                
+                if (activeUser !== 'ADMIN') {
+                    completedControls.classList.remove('hidden');
+                    const history = JSON.parse(localStorage.getItem('logisticsControlTower_completedHistory')) || {};
+                    const userHistory = history[activeUser] || {};
+                    const sortedDates = Object.keys(userHistory).sort((a, b) => new Date(b) - new Date(a));
+                    dateFilterSelect.innerHTML = '';
+                    sortedDates.forEach(dateKey => {
+                         const option = document.createElement('option');
+                         option.value = dateKey;
+                         const date = new Date(dateKey);
+                         date.setDate(date.getDate() + 1);
+                         option.textContent = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                         dateFilterSelect.appendChild(option);
+                    });
+                }
+                renderActivities();
+            });
+            
+            dateFilterSelect.addEventListener('change', renderActivities);
+            
+            schedulesTitleContainer.addEventListener('click', () => {
+                if (activeUser !== 'ADMIN') {
+                    schedulesTitleContainer.classList.toggle('collapsible');
+                    if (scheduleCardsWrapper.style.maxHeight === "0px") {
+                        scheduleCardsWrapper.style.maxHeight = scheduleCardsWrapper.scrollHeight + "px";
+                    } else {
+                        scheduleCardsWrapper.style.maxHeight = "0px";
+                    }
+                }
+            });
+
+            const toggleContinuousBtn = document.getElementById('toggle-continuous-btn');
+            if(toggleContinuousBtn) {
+                toggleContinuousBtn.addEventListener('click', () => {
+                    const list = document.getElementById('continuous-activity-list');
+                    list.classList.toggle('hidden');
+                    toggleContinuousBtn.innerHTML = list.classList.contains('hidden') ? 
+                        `<svg class="w-6 h-6 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .527-1.666 1.48-3.14 2.656-4.32M19.95 11.666A10.02 10.02 0 0012 5c-1.353 0-2.648.27-3.856.764M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20"></path></svg>` : 
+                        `<svg class="w-6 h-6 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>`;
+                });
+            }
+
+            submitPasswordBtn.addEventListener('click', handlePasswordSubmit);
+            cancelPasswordBtn.addEventListener('click', closePasswordModal);
+            passwordInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handlePasswordSubmit(); });
+
+            changePasswordBtn.addEventListener('click', openChangePasswordModal);
+            cancelChangePasswordBtn.addEventListener('click', closeChangePasswordModal);
+            submitChangePasswordBtn.addEventListener('click', handleChangePasswordSubmit);
+            newPasswordInput.addEventListener('keypress', e => { if (e.key === 'Enter') handleChangePasswordSubmit(); });
+            confirmPasswordInput.addEventListener('keypress', e => { if (e.key === 'Enter') handleChangePasswordSubmit(); });
+            
+            resetUserPasswordBtn.addEventListener('click', openResetPasswordModal);
+            cancelResetPasswordBtn.addEventListener('click', closeResetPasswordModal);
+            submitResetPasswordBtn.addEventListener('click', handleResetPasswordSubmit);
+            
+            notepadBtn.addEventListener('click', openNotepadModal);
+            closeNotepadBtn.addEventListener('click', closeNotepadModal);
+            notepadInput.addEventListener('keyup', saveNotepad);
+            
+            closeTimerModalBtn.addEventListener('click', closeTimerModal);
+            
+            submitPonteBtn.addEventListener('click', createPonte);
+            cancelPonteBtn.addEventListener('click', closePonteModal);
+
+            userMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenuDropdown.classList.toggle('hidden');
+            });
+
+            window.addEventListener('click', (e) => {
+                if (!userMenuDropdown.classList.contains('hidden') && !userMenuBtn.contains(e.target)) {
+                    userMenuDropdown.classList.add('hidden');
+                }
+            });
+
+            soundToggleBtn.addEventListener('click', () => {
+                const desiredState = !isSoundEnabled;
+                if (!desiredState) {
+                    isSoundEnabled = false;
+                    localStorage.setItem('logisticsControlTower_soundEnabled', isSoundEnabled);
+                    updateSoundIcon();
+                    return;
+                }
+                if (typeof Tone === 'undefined') {
+                    console.error("Biblioteca Tone.js não está disponível.");
+                    return;
+                }
+                const startAudioAndConfirm = async () => {
+                    try {
+                        if (Tone.context.state !== 'running') { await Tone.start(); }
+                        if (Tone.Transport.state !== 'started') { Tone.Transport.start(); }
+                        if (!synth) { synth = new Tone.Synth().toDestination(); }
+                        synth.triggerAttackRelease("G5", "16n", Tone.now());
+                        isSoundEnabled = true;
+                        localStorage.setItem('logisticsControlTower_soundEnabled', isSoundEnabled);
+                    } catch (e) {
+                        console.error("Falha ao iniciar o contexto de áudio:", e);
+                        isSoundEnabled = false;
+                        localStorage.setItem('logisticsControlTower_soundEnabled', isSoundEnabled);
+                    } finally {
+                        updateSoundIcon();
+                    }
+                };
+                startAudioAndConfirm();
+            });
+
+            exportDataBtn.addEventListener('click', exportData);
+            importDataBtn.addEventListener('click', () => importFileInput.click());
+            
+            importFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => { openImportConfirmModal(e.target.result); };
+                reader.onerror = (e) => { console.error("Erro ao ler o arquivo.", e); };
+                reader.readAsText(file);
+                event.target.value = null;
+            });
+            
+            submitImportBtn.addEventListener('click', processImport);
+            cancelImportBtn.addEventListener('click', closeImportConfirmModal);
+
+            cancelExportBtn.addEventListener('click', () => {
+                exportConfirmModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => exportConfirmModal.classList.add('hidden'), 300);
+            });
+
+            submitExportBtn.addEventListener('click', () => {
+                _autoCompletePendingActivities();
+                _generatePDF();
+                exportConfirmModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => exportConfirmModal.classList.add('hidden'), 300);
+            });
+        });
+    </script>
+</body>
+</html>
+
